@@ -1,5 +1,2 @@
-Debug/
-Release/
-*.VC.db
-*.VC.opendb
-*.suo
+/build
+.DS_Store
