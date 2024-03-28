@@ -30,7 +30,12 @@ void BOWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channe
 	if (hasWordStateData(state))
 	{
 		char number_str[128];
-		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, 8, number_str, 128 );
+		unsigned numBits = 4;
+		if (state == WordState::command)
+		{
+			numBits = 8;
+		}
+		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, numBits, number_str, 128 );
 		AddResultString( type, " ", number_str );
 	}
 	else
@@ -83,7 +88,12 @@ void BOWireAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBa
 	if (hasWordStateData(state))
 	{
 		char number_str[128];
-		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, 8, number_str, 128 );
+		unsigned numBits = 4;
+		if (state == WordState::command)
+		{
+			numBits = 8;
+		}
+		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, numBits, number_str, 128 );
 		AddTabularText( type, " ", number_str );
 	}
 	else
