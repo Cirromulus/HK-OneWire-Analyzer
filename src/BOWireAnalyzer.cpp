@@ -84,7 +84,7 @@ void BOWireAnalyzer::WorkerThread()
 		// end byte only differs by high-duration.
 		// This is observed to be about 8ms.
 		// Could be checked by "busy" line,
-		// but this is not necessary (just greater than 2 ticks or equal to one tick)
+		// but this is not necessary (just greater than 2 ticks or equal to one tick, TODO)
 		// or implied through the number of observed bits (TODO)
 		const auto samplingPointStopBit = expectedNextLowEdge + samplesPerTick * safetyMargin;
 		if ( !mChannelData->WouldAdvancingToAbsPositionCauseTransition(samplingPointStopBit))
@@ -107,10 +107,10 @@ void BOWireAnalyzer::WorkerThread()
 				// start state.
 				state = BOWireState(fallingEdge);
 				markerType = AnalyzerResults::Start;
-				mResults->CommitPacketAndStartNewPacket();
+				mResults->CommitPacketAndStartNewPacket(); // probably useless anyway
 				break;
 			case BitType::data1:
-				state.data[to_underlying(state.wordState)] |= 1 << state.currentNumberOfBitsReceived;
+				state.setCurrentBit(1);
 				markerType = AnalyzerResults::One;
 				break;
 			case BitType::data0:
@@ -145,7 +145,14 @@ void BOWireAnalyzer::WorkerThread()
 		}
 		if (state.currentNumberOfBitsReceived == *expectedBitsInThisState)
 		{
-			if (hasWordStateData(state.wordState))
+			// in word level, we don't care about the actual state
+			const bool wordlevelProduceFrame =
+					(mSettings->mDecodeLevel == BOWireAnalyzerSettings::wordlevel) &&
+					hasWordStateData(state.wordState);
+			const bool commandLevelProduceFrame =
+					(mSettings->mDecodeLevel == BOWireAnalyzerSettings::commandlevel) &&
+					(bitType == BitType::end);
+			if (wordlevelProduceFrame || commandLevelProduceFrame)
 			{
 				//print out a Frame
 				const auto& endOfFrame = risingEdge;
@@ -156,6 +163,7 @@ void BOWireAnalyzer::WorkerThread()
 			// advance
 			state.wordState = static_cast<WordState>(to_underlying(state.wordState) + 1);
 			state.currentNumberOfBitsReceived = 0;
+
 			// commit markers and maybe frame
 			mResults->CommitResults();
 		}
@@ -169,32 +177,44 @@ BOWireAnalyzer::addFrame(const BOWire::BOWireState& state, const U32& now)
 	// inspired by one-wire: just generate both v1 and v2 frames, lolo
 	const auto& endOfTransmission = now;
 
-	Frame frame;
+	Frame frame;	// needed for bubble text
 	frame.mStartingSampleInclusive = state.startOfCurrentWord;
 	frame.mEndingSampleInclusive = endOfTransmission;
-	frame.mData1 = state.data[to_underlying(state.wordState)];
+	frame.mData1 = state.payload.getSerialized();
 	//frame.mData2 = some_more_data_we_collected;
 	frame.mType = to_underlying(state.wordState);
-	frame.mFlags = 0;
-	// if( such_and_such_error == true )
-	// frame.mFlags |= SUCH_AND_SUCH_ERROR_FLAG | DISPLAY_AS_ERROR_FLAG;
-	// if( such_and_such_warning == true )
-	// frame.mFlags |= SUCH_AND_SUCH_WARNING_FLAG | DISPLAY_AS_WARNING_FLAG;
+	frame.mFlags = mSettings->mDecodeLevel;
 	mResults->AddFrame( frame );
 
 	FrameV2 frame_v2;
-	const char* type = getNameOfWordState(state.wordState);
-	const auto wordWidth = getBitsPerWord(state.wordState).value_or(8);
-	if (wordWidth <= 8)
+	if (mSettings->mDecodeLevel == BOWireAnalyzerSettings::wordlevel)
 	{
-		frame_v2.AddByte(type, state.data[to_underlying(state.wordState)]);
+		const char* type = getNameOfWordState(state.wordState);
+		const auto wordWidth = getBitsPerWord(state.wordState).value_or(8);
+		if (wordWidth <= 8)
+		{
+			frame_v2.AddByte(type, state.payload.getWord(state.wordState));
+		}
+		else
+		{
+			frame_v2.AddByteArray(type, reinterpret_cast<const U8*>(&state.payload.data), 2);
+		}
+		mResults->AddFrameV2( frame_v2, type, state.startOfCurrentWord, endOfTransmission );
 	}
 	else
 	{
-
-		frame_v2.AddByteArray(type, reinterpret_cast<const U8*>(&state.data[to_underlying(state.wordState)]), 2);
+		//  commandlevel
+		const char* type = "command";
+		frame_v2.AddByte(getNameOfWordState(WordState::source), state.payload.getWord(WordState::source));
+		frame_v2.AddByte(getNameOfWordState(WordState::dest), state.payload.getWord(WordState::dest));
+		frame_v2.AddByte(getNameOfWordState(WordState::command), state.payload.getWord(WordState::command));
+		if (state.wordState == WordState::data || state.wordState == WordState::endBit)
+		{
+			type = "command with data";
+			frame_v2.AddByteArray(getNameOfWordState(WordState::data), reinterpret_cast<const U8*>(&state.payload.data), 2);
+		}
+		mResults->AddFrameV2( frame_v2, type, state.startOfTransmission, endOfTransmission );
 	}
-	mResults->AddFrameV2( frame_v2, type, frame.mStartingSampleInclusive, frame.mEndingSampleInclusive );
 
 	// no commit, because this is done somewhere else
 }

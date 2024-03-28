@@ -26,18 +26,43 @@ void BOWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channe
 	Frame frame = GetFrame( frame_index );
 	const auto& state = static_cast<WordState>(frame.mType);
 	const char* type = getNameOfWordState(state);
+	const auto decodeLevel = static_cast<BOWireAnalyzerSettings::DecodeLevel>(frame.mFlags);
 
-	if (hasWordStateData(state))
+	if (decodeLevel == BOWireAnalyzerSettings::wordlevel)
 	{
-		char number_str[128];
-		const auto numBits = getBitsPerWord(state).value_or(8);
-		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, numBits, number_str, 128 );
-		AddResultString( number_str );
-		AddResultString( type, " ", number_str );
+		if (hasWordStateData(state))
+		{
+			char number_str[128];
+			const auto numBits = getBitsPerWord(state).value_or(8);
+			const auto payload = Payload(frame.mData1);
+			const auto data = payload.getWord(state);
+			AnalyzerHelpers::GetNumberString( data, display_base, numBits, number_str, 128 );
+			AddResultString( number_str );
+			AddResultString( type, " ", number_str );
+		}
+		else
+		{
+			AddResultString( type );
+		}
 	}
 	else
 	{
-		AddResultString( type );
+		// whole command
+		char src[16];
+		char dst[16];
+		char cmd[16];
+		char data[16] = {0};	// default: none
+		const auto payload = Payload(frame.mData1);
+
+		const bool withData = state == WordState::data; // perhaps ??
+
+		AnalyzerHelpers::GetNumberString( payload.source, display_base, *getBitsPerWord(WordState::source), src, 16 );
+		AnalyzerHelpers::GetNumberString( payload.dest, display_base, *getBitsPerWord(WordState::dest), dst, 16 );
+		AnalyzerHelpers::GetNumberString( payload.command, display_base, *getBitsPerWord(WordState::command), cmd, 16 );
+		if (withData)
+			AnalyzerHelpers::GetNumberString( payload.data, display_base, *getBitsPerWord(WordState::data), data, 16 );
+
+		AddResultString(src, "->", dst, ":", cmd, data);
 	}
 
 }

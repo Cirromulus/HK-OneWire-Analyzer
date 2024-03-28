@@ -20,8 +20,8 @@ BOWireAnalyzerSettings::BOWireAnalyzerSettings()
 	mPacketLevelDecodeInterface.reset(new AnalyzerSettingInterfaceNumberList());
 	mPacketLevelDecodeInterface->SetTitleAndTooltip( "Decode level",
 										   "Define word or command level decoding" );
-	mPacketLevelDecodeInterface->AddNumber(0, "Word level", "Decode individual words");
-	mPacketLevelDecodeInterface->AddNumber(1, "Command level", "Decode complete commands");
+	mPacketLevelDecodeInterface->AddNumber(wordlevel, "Word level", "Decode individual words");
+	mPacketLevelDecodeInterface->AddNumber(commandlevel, "Command level", "Decode complete commands");
 
 	AddInterface( mInputChannelInterface.get() );
 	AddInterface( mTimeBaseInterface.get() );
@@ -42,6 +42,7 @@ bool BOWireAnalyzerSettings::SetSettingsFromInterfaces()
 {
 	mInputChannel = mInputChannelInterface->GetChannel();
 	mTimeBase_us = mTimeBaseInterface->GetInteger();
+	mDecodeLevel = static_cast<DecodeLevel>(mPacketLevelDecodeInterface->GetNumber());
 
 	ClearChannels();
 	AddChannel( mInputChannel, "B&O Onewire DATA", true );
@@ -54,6 +55,7 @@ void BOWireAnalyzerSettings::UpdateInterfacesFromSettings()
 {
 	mInputChannelInterface->SetChannel( mInputChannel );
 	mTimeBaseInterface->SetInteger( mTimeBase_us );
+	mPacketLevelDecodeInterface->SetNumber( mDecodeLevel );
 }
 
 void BOWireAnalyzerSettings::LoadSettings( const char* settings )
@@ -63,7 +65,9 @@ void BOWireAnalyzerSettings::LoadSettings( const char* settings )
 
 	text_archive >> mInputChannel;
 	text_archive >> mTimeBase_us;
-	// text_archive >> mPacketLevelDecodeInterface;
+	double intermediate;
+	text_archive >> intermediate;
+	mPacketLevelDecodeInterface->SetNumber(intermediate);
 
 	ClearChannels();
 	AddChannel( mInputChannel, "B&O Onewire", true );
@@ -77,7 +81,7 @@ const char* BOWireAnalyzerSettings::SaveSettings()
 
 	text_archive << mInputChannel;
 	text_archive << mTimeBase_us;
-	// text_archive << mPacketLevelDecodeInterface;
+	text_archive << mPacketLevelDecodeInterface->GetNumber();
 
 	return SetReturnString( text_archive.GetString() );
 }

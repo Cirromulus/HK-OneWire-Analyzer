@@ -20,6 +20,12 @@ public:
 	// Channel mOptionalBusyChannel;
 	U64 mTimeBase_us;
 
+	enum DecodeLevel : uint8_t
+	{
+		wordlevel = 0,
+		commandlevel
+	} mDecodeLevel;
+
 protected:
 	std::unique_ptr< AnalyzerSettingInterfaceChannel >	mInputChannelInterface;
 	std::unique_ptr< AnalyzerSettingInterfaceInteger >	mTimeBaseInterface;

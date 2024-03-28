@@ -25,6 +25,81 @@ namespace BOWire
 		_num
 	};
 
+	struct Payload
+	{
+		U8 source : 4;
+		U8 dest : 4;
+		U8 command;
+		U16 data;
+
+		constexpr Payload(U8 s, U8 d, U8 c, U16 dat)
+			: source{s}, dest{d}, command{c}, data{dat}
+			{}
+
+		constexpr Payload(U32 serialized)
+		{
+			source = serialized & 0x0F;
+			dest = (serialized & 0xF0) >> 4;
+			command = (serialized & 0xFF00) >> 8;
+			data = (serialized & 0xFFFF0000) >> 16;
+		}
+
+		constexpr
+		U32
+		getSerialized() const
+		{
+			U32 ret = 0;
+			ret |= source & 0xF;
+			ret |= (dest & 0xF) << 4;
+			ret |= command << 8;
+			ret |= data << 16;
+			return ret;
+		}
+
+		// note: Does not reset bit
+		constexpr void
+		setBit(const WordState& state, const U8& bitOffset)
+		{
+			switch (state)
+			{
+			case WordState::source:
+				source |= 1 << bitOffset;
+				break;
+			case WordState::dest:
+				dest |= 1 << bitOffset;
+				break;
+			case WordState::command:
+				command |= 1 << bitOffset;
+				break;
+			case WordState::data:
+				data |= 1 << bitOffset;
+				break;
+			default:
+				break;
+			}
+		}
+
+		constexpr
+		U16
+		getWord(const WordState& wordstate) const
+		{
+			switch(wordstate)
+			{
+			case WordState::source:
+				return source & 0xF;
+			case WordState::dest:
+				return dest & 0xF;
+			case WordState::command:
+				return command;
+			case WordState::data:
+				return data;
+			default:
+				// should not happen
+				return 0;
+			}
+		}
+	};
+
 	constexpr
 	std::optional<Bits>
 	getBitsPerWord(const WordState& word)
@@ -161,15 +236,29 @@ namespace BOWire
 		U32 startOfCurrentWord;
 		Bits currentNumberOfBitsReceived;
 		WordState wordState;
-		std::array<U16, std::to_underlying(WordState::_num)> data;	// ugly
+		Payload payload;
 
 		constexpr BOWireState(U32 startOfTransmission = 0)
 			: startOfTransmission{startOfTransmission},
 			  startOfCurrentWord{startOfTransmission},
 			  currentNumberOfBitsReceived{0},
-			  wordState{WordState::start}
+			  wordState{WordState::start},
+			  payload{0,0,0,0}
 		{
-			std::fill(data.begin(), data.end(), 0);
+		}
+
+		constexpr void
+		setCurrentBit(bool value)
+		{
+			if (value)
+			{
+				payload.setBit(wordState, currentNumberOfBitsReceived);
+			}
+			else
+			{
+				// NO reset implemented (and needed?)
+			}
+			// does NOT advance `currentNumberOfBitsReceived`!
 		}
 
 		constexpr void
