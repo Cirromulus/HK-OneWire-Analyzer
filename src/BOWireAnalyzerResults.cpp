@@ -30,11 +30,7 @@ void BOWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channe
 	if (hasWordStateData(state))
 	{
 		char number_str[128];
-		unsigned numBits = 4;
-		if (state == WordState::command)
-		{
-			numBits = 8;
-		}
+		const auto numBits = getBitsPerWord(state).value_or(8);
 		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, numBits, number_str, 128 );
 		AddResultString( type, " ", number_str );
 	}
@@ -88,11 +84,7 @@ void BOWireAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBa
 	if (hasWordStateData(state))
 	{
 		char number_str[128];
-		unsigned numBits = 4;
-		if (state == WordState::command)
-		{
-			numBits = 8;
-		}
+		const auto numBits = getBitsPerWord(state).value_or(4);
 		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, numBits, number_str, 128 );
 		AddTabularText( type, " ", number_str );
 	}
@@ -105,7 +97,7 @@ void BOWireAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBa
 
 void BOWireAnalyzerResults::GeneratePacketTabularText( U64 packet_id, DisplayBase display_base )
 {
-	//not supported
+	//not yet? supported
 
 }
 

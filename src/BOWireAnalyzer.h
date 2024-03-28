@@ -2,6 +2,7 @@
 #define BOWIRE_ANALYZER_H
 
 #include <Analyzer.h>
+#include "BOWire.h"
 #include "BOWireAnalyzerResults.h"
 #include "BOWireSimulationDataGenerator.h"
 
@@ -31,8 +32,9 @@ protected: //vars
 	BOWireSimulationDataGenerator mSimulationDataGenerator;
 	bool mSimulationInitilized;
 
-	// optionally state observation values for debugger or something
-
+private:
+	void
+	addFrame(const BOWire::BOWireState& state, const U32& now);
 };
 
 extern "C" ANALYZER_EXPORT const char* __cdecl GetAnalyzerName();

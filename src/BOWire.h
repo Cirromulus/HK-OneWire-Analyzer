@@ -18,11 +18,8 @@ namespace BOWire
 		source,
 		dest,
 		command,
-		// if it comes with data
-		data1,
-		data2,
-		data3,
-		data4,
+		// data optional
+		data,
 		endBit,
 
 		_num
@@ -43,11 +40,8 @@ namespace BOWire
 				return 4;
 			case WordState::command:
 				return 8;
-			case WordState::data1:
-			case WordState::data2:
-			case WordState::data3:
-			case WordState::data4:
-				return 4;
+			case WordState::data:
+				return 16;
 			case WordState::endBit:
 				return 1;
 			default:
@@ -64,10 +58,7 @@ namespace BOWire
 			case WordState::source:
 			case WordState::dest:
 			case WordState::command:
-			case WordState::data1:
-			case WordState::data2:
-			case WordState::data3:
-			case WordState::data4:
+			case WordState::data:
 				return true;
 			default:
 				return false;
@@ -170,7 +161,7 @@ namespace BOWire
 		U32 startOfCurrentWord;
 		Bits currentNumberOfBitsReceived;
 		WordState wordState;
-		std::array<U8, std::to_underlying(WordState::_num)> data;
+		std::array<U16, std::to_underlying(WordState::_num)> data;	// ugly
 
 		constexpr BOWireState(U32 startOfTransmission = 0)
 			: startOfTransmission{startOfTransmission},
@@ -203,10 +194,7 @@ namespace BOWire
 				return "destination";
 			case WordState::command:
 				return "command";
-			case WordState::data1:
-			case WordState::data2:
-			case WordState::data3:
-			case WordState::data4:
+			case WordState::data:
 				return "data";
 			case WordState::endBit:
 				return "end";

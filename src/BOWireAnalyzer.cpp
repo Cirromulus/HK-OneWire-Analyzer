@@ -5,6 +5,10 @@
 
 #include <iostream>
 
+using namespace BOWire;
+using namespace std;
+
+
 BOWireAnalyzer::BOWireAnalyzer()
 :	Analyzer2(),
 	mSettings( new BOWireAnalyzerSettings() ),
@@ -27,8 +31,6 @@ void BOWireAnalyzer::SetupResults()
 
 void BOWireAnalyzer::WorkerThread()
 {
-	using namespace BOWire;
-
 	const auto sampleRateHz = GetSampleRate();
 	const auto samplesPerTick = getSamplesPerTick(mSettings->mTimeBase_us, sampleRateHz);
 
@@ -107,7 +109,7 @@ void BOWireAnalyzer::WorkerThread()
 				mResults->CommitPacketAndStartNewPacket();
 				break;
 			case BitType::data1:
-				state.data[std::to_underlying(state.wordState)] |= 1 << state.currentNumberOfBitsReceived;
+				state.data[to_underlying(state.wordState)] |= 1 << state.currentNumberOfBitsReceived;
 				markerType = AnalyzerResults::One;
 				break;
 			case BitType::data0:
@@ -119,8 +121,8 @@ void BOWireAnalyzer::WorkerThread()
 				// mResults->CommitPacketAndStartNewPacket not needed here, as this produces no frames
 				break;
 			default:
-				std::cerr << "Üeh, unknown bit type! (" << std::to_underlying(bitType) <<
-						")" << std::endl;
+				cerr << "Üeh, unknown bit type! (" << to_underlying(bitType) <<
+						")" << endl;
 				markerType = AnalyzerResults::ErrorX;
 		}
 		state.currentNumberOfBitsReceived++;
@@ -130,8 +132,8 @@ void BOWireAnalyzer::WorkerThread()
 		const auto expectedBitsInThisState = getBitsPerWord(state.wordState);
 		if (! expectedBitsInThisState.has_value())
 		{
-			std::cerr << "We over-stated our state (" << std::to_underlying(state.wordState) <<
-						")" << std::endl;
+			cerr << "We over-stated our state (" << to_underlying(state.wordState) <<
+						")" << endl;
 			mResults->AddMarker(centerOfLowPulse,
 					AnalyzerResults::ErrorSquare,
 					mSettings->mInputChannel);
@@ -145,30 +147,57 @@ void BOWireAnalyzer::WorkerThread()
 			if (hasWordStateData(state.wordState))
 			{
 				//print out a Frame
-				const auto& endOfTransmission = risingEdge;
-				Frame frame;
-				frame.mStartingSampleInclusive = state.startOfCurrentWord;
-				frame.mEndingSampleInclusive = endOfTransmission;
-				frame.mData1 = state.data[std::to_underlying(state.wordState)];
-				//frame.mData2 = some_more_data_we_collected;
-				frame.mType = std::to_underlying(state.wordState);
-				frame.mFlags = 0;
-				// if( such_and_such_error == true )
-				// frame.mFlags |= SUCH_AND_SUCH_ERROR_FLAG | DISPLAY_AS_ERROR_FLAG;
-				// if( such_and_such_warning == true )
-				// frame.mFlags |= SUCH_AND_SUCH_WARNING_FLAG | DISPLAY_AS_WARNING_FLAG;
-				mResults->AddFrame( frame );
-				ReportProgress( endOfTransmission );
+				const auto& endOfFrame = risingEdge;
+				addFrame(state, endOfFrame);
+				ReportProgress( endOfFrame );
 			}
 
 			// advance
-			state.wordState = static_cast<WordState>(std::to_underlying(state.wordState) + 1);
+			state.wordState = static_cast<WordState>(to_underlying(state.wordState) + 1);
 			state.currentNumberOfBitsReceived = 0;
 			// commit markers and maybe frame
 			mResults->CommitResults();
 		}
 
 	}
+}
+
+void
+BOWireAnalyzer::addFrame(const BOWire::BOWireState& state, const U32& now)
+{
+	// inspired by one-wire: just generate both v1 and v2 frames, lolo
+	const auto& endOfTransmission = now;
+
+	Frame frame;
+	frame.mStartingSampleInclusive = state.startOfCurrentWord;
+	frame.mEndingSampleInclusive = endOfTransmission;
+	frame.mData1 = state.data[to_underlying(state.wordState)];
+	//frame.mData2 = some_more_data_we_collected;
+	frame.mType = to_underlying(state.wordState);
+	frame.mFlags = 0;
+	// if( such_and_such_error == true )
+	// frame.mFlags |= SUCH_AND_SUCH_ERROR_FLAG | DISPLAY_AS_ERROR_FLAG;
+	// if( such_and_such_warning == true )
+	// frame.mFlags |= SUCH_AND_SUCH_WARNING_FLAG | DISPLAY_AS_WARNING_FLAG;
+	mResults->AddFrame( frame );
+
+	FrameV2 frame_v2;
+	const char* type = getNameOfWordState(state.wordState);
+	const auto wordWidth = getBitsPerWord(state.wordState).value_or(8);
+	if (wordWidth <= 8)
+	{
+		frame_v2.AddByte(type, state.data[to_underlying(state.wordState)]);
+	}
+	else
+	{
+
+		frame_v2.AddByteArray(type, reinterpret_cast<const U8*>(&state.data[to_underlying(state.wordState)]), 2);
+	}
+
+	mResults->AddFrameV2( frame_v2, "B&O Command", frame.mStartingSampleInclusive, frame.mEndingSampleInclusive );
+
+	// no commit, because this is done somewhere else
+
 }
 
 bool BOWireAnalyzer::NeedsRerun()
