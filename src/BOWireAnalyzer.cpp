@@ -62,6 +62,7 @@ void BOWireAnalyzer::WorkerThread()
 								mSettings->mInputChannel );
 
 			// nothing good will come from this.
+			mResults->CancelPacketAndStartNewPacket();
 			state.reset();
 			continue;
 		}
@@ -103,6 +104,7 @@ void BOWireAnalyzer::WorkerThread()
 				// start state.
 				state = BOWireState(fallingEdge);
 				markerType = AnalyzerResults::Start;
+				mResults->CommitPacketAndStartNewPacket();
 				break;
 			case BitType::data1:
 				state.data[std::to_underlying(state.wordState)] |= 1 << state.currentNumberOfBitsReceived;
@@ -114,6 +116,7 @@ void BOWireAnalyzer::WorkerThread()
 				break;
 			case BitType::end:
 				markerType = AnalyzerResults::Stop;
+				// mResults->CommitPacketAndStartNewPacket not needed here, as this produces no frames
 				break;
 			default:
 				std::cerr << "Üeh, unknown bit type! (" << std::to_underlying(bitType) <<
@@ -134,6 +137,7 @@ void BOWireAnalyzer::WorkerThread()
 					mSettings->mInputChannel);
 			// PS.: It is ok that we already wrote into something,
 			// we have a buffer of one byte (because of ::_num)
+			mResults->CancelPacketAndStartNewPacket();
 			continue;
 		}
 		if (state.currentNumberOfBitsReceived == *expectedBitsInThisState)
