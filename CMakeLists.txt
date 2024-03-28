@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.13)
 
-project(SimpleSerialAnalyzer)
+project(BOWireAnalyzer)
 
 add_definitions( -DLOGIC2 )
 
@@ -12,15 +12,17 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(ExternalAnalyzerSDK)
 
-set(SOURCES 
-src/SimpleSerialAnalyzer.cpp
-src/SimpleSerialAnalyzer.h
-src/SimpleSerialAnalyzerResults.cpp
-src/SimpleSerialAnalyzerResults.h
-src/SimpleSerialAnalyzerSettings.cpp
-src/SimpleSerialAnalyzerSettings.h
-src/SimpleSerialSimulationDataGenerator.cpp
-src/SimpleSerialSimulationDataGenerator.h
+set(CMAKE_CXX_STANDARD 23)
+
+set(SOURCES
+src/BOWireAnalyzer.cpp
+src/BOWireAnalyzer.h
+src/BOWireAnalyzerResults.cpp
+src/BOWireAnalyzerResults.h
+src/BOWireAnalyzerSettings.cpp
+src/BOWireAnalyzerSettings.h
+src/BOWireSimulationDataGenerator.cpp
+src/BOWireSimulationDataGenerator.h
 )
 
 add_analyzer_plugin(${PROJECT_NAME} SOURCES ${SOURCES})

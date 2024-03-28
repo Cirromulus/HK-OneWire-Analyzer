@@ -1,20 +1,21 @@
-#include "SimpleSerialAnalyzerSettings.h"
+#include "BOWireAnalyzerSettings.h"
 #include <AnalyzerHelpers.h>
 
 
-SimpleSerialAnalyzerSettings::SimpleSerialAnalyzerSettings()
+BOWireAnalyzerSettings::BOWireAnalyzerSettings()
 :	mInputChannel( UNDEFINED_CHANNEL ),
-	mBitRate( 9600 )
+	mTimeBase_us( 560 )
 {
 	mInputChannelInterface.reset( new AnalyzerSettingInterfaceChannel() );
-	mInputChannelInterface->SetTitleAndTooltip( "Serial", "Standard Simple Serial" );
+	mInputChannelInterface->SetTitleAndTooltip( "Data", "Standard B&O Onewire Data" );
 	mInputChannelInterface->SetChannel( mInputChannel );
 
 	mBitRateInterface.reset( new AnalyzerSettingInterfaceInteger() );
-	mBitRateInterface->SetTitleAndTooltip( "Bit Rate (Bits/S)",  "Specify the bit rate in bits per second." );
+	mBitRateInterface->SetTitleAndTooltip( "Time Base of one tick (microseconds)",
+										   "Specify the microseconds per tick." );
 	mBitRateInterface->SetMax( 6000000 );
 	mBitRateInterface->SetMin( 1 );
-	mBitRateInterface->SetInteger( mBitRate );
+	mBitRateInterface->SetInteger( mTimeBase_us );
 
 	AddInterface( mInputChannelInterface.get() );
 	AddInterface( mBitRateInterface.get() );
@@ -24,50 +25,50 @@ SimpleSerialAnalyzerSettings::SimpleSerialAnalyzerSettings()
 	AddExportExtension( 0, "csv", "csv" );
 
 	ClearChannels();
-	AddChannel( mInputChannel, "Serial", false );
+	AddChannel( mInputChannel, "B&O Onewire", false );
 }
 
-SimpleSerialAnalyzerSettings::~SimpleSerialAnalyzerSettings()
+BOWireAnalyzerSettings::~BOWireAnalyzerSettings()
 {
 }
 
-bool SimpleSerialAnalyzerSettings::SetSettingsFromInterfaces()
+bool BOWireAnalyzerSettings::SetSettingsFromInterfaces()
 {
 	mInputChannel = mInputChannelInterface->GetChannel();
-	mBitRate = mBitRateInterface->GetInteger();
+	mTimeBase_us = mBitRateInterface->GetInteger();
 
 	ClearChannels();
-	AddChannel( mInputChannel, "Simple Serial", true );
+	AddChannel( mInputChannel, "B&O Onewire", true );
 
 	return true;
 }
 
-void SimpleSerialAnalyzerSettings::UpdateInterfacesFromSettings()
+void BOWireAnalyzerSettings::UpdateInterfacesFromSettings()
 {
 	mInputChannelInterface->SetChannel( mInputChannel );
-	mBitRateInterface->SetInteger( mBitRate );
+	mBitRateInterface->SetInteger( mTimeBase_us );
 }
 
-void SimpleSerialAnalyzerSettings::LoadSettings( const char* settings )
+void BOWireAnalyzerSettings::LoadSettings( const char* settings )
 {
 	SimpleArchive text_archive;
 	text_archive.SetString( settings );
 
 	text_archive >> mInputChannel;
-	text_archive >> mBitRate;
+	text_archive >> mTimeBase_us;
 
 	ClearChannels();
-	AddChannel( mInputChannel, "Simple Serial", true );
+	AddChannel( mInputChannel, "B&O Onewire", true );
 
 	UpdateInterfacesFromSettings();
 }
 
-const char* SimpleSerialAnalyzerSettings::SaveSettings()
+const char* BOWireAnalyzerSettings::SaveSettings()
 {
 	SimpleArchive text_archive;
 
 	text_archive << mInputChannel;
-	text_archive << mBitRate;
+	text_archive << mTimeBase_us;
 
 	return SetReturnString( text_archive.GetString() );
 }
