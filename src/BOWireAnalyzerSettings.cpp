@@ -38,7 +38,8 @@ bool BOWireAnalyzerSettings::SetSettingsFromInterfaces()
 	mTimeBase_us = mBitRateInterface->GetInteger();
 
 	ClearChannels();
-	AddChannel( mInputChannel, "B&O Onewire", true );
+	AddChannel( mInputChannel, "B&O Onewire DATA", true );
+	// AddChannel( mOptionalBusyChannel, "B&O Onewire Busy", false );
 
 	return true;
 }

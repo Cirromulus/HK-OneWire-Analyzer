@@ -17,6 +17,7 @@ public:
 
 
 	Channel mInputChannel;
+	// Channel mOptionalBusyChannel;
 	U64 mTimeBase_us;
 
 protected:

@@ -32,6 +32,7 @@ void BOWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channe
 		char number_str[128];
 		const auto numBits = getBitsPerWord(state).value_or(8);
 		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, numBits, number_str, 128 );
+		AddResultString( number_str );
 		AddResultString( type, " ", number_str );
 	}
 	else

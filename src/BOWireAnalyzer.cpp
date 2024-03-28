@@ -15,6 +15,7 @@ BOWireAnalyzer::BOWireAnalyzer()
 	mSimulationInitilized( false )
 {
 	SetAnalyzerSettings( mSettings.get() );
+	UseFrameV2();
 }
 
 BOWireAnalyzer::~BOWireAnalyzer()
@@ -193,11 +194,10 @@ BOWireAnalyzer::addFrame(const BOWire::BOWireState& state, const U32& now)
 
 		frame_v2.AddByteArray(type, reinterpret_cast<const U8*>(&state.data[to_underlying(state.wordState)]), 2);
 	}
-
-	mResults->AddFrameV2( frame_v2, "B&O Command", frame.mStartingSampleInclusive, frame.mEndingSampleInclusive );
+	frame_v2.AddString( "description", type );
+	mResults->AddFrameV2( frame_v2, type, frame.mStartingSampleInclusive, frame.mEndingSampleInclusive );
 
 	// no commit, because this is done somewhere else
-
 }
 
 bool BOWireAnalyzer::NeedsRerun()
