@@ -10,19 +10,25 @@ BOWireAnalyzerSettings::BOWireAnalyzerSettings()
 	mInputChannelInterface->SetTitleAndTooltip( "Data", "Standard B&O Onewire Data" );
 	mInputChannelInterface->SetChannel( mInputChannel );
 
-	mBitRateInterface.reset( new AnalyzerSettingInterfaceInteger() );
-	mBitRateInterface->SetTitleAndTooltip( "Time Base of one tick (microseconds)",
+	mTimeBaseInterface.reset( new AnalyzerSettingInterfaceInteger() );
+	mTimeBaseInterface->SetTitleAndTooltip( "Time Base of one tick (microseconds)",
 										   "Specify the microseconds per tick." );
-	mBitRateInterface->SetMax( 6000000 );
-	mBitRateInterface->SetMin( 1 );
-	mBitRateInterface->SetInteger( mTimeBase_us );
+	mTimeBaseInterface->SetMax( 6000000 );
+	mTimeBaseInterface->SetMin( 1 );
+	mTimeBaseInterface->SetInteger( mTimeBase_us );
+
+	mPacketLevelDecodeInterface.reset(new AnalyzerSettingInterfaceNumberList());
+	mPacketLevelDecodeInterface->SetTitleAndTooltip( "Decode level",
+										   "Define word or command level decoding" );
+	mPacketLevelDecodeInterface->AddNumber(0, "Word level", "Decode individual words");
+	mPacketLevelDecodeInterface->AddNumber(1, "Command level", "Decode complete commands");
 
 	AddInterface( mInputChannelInterface.get() );
-	AddInterface( mBitRateInterface.get() );
+	AddInterface( mTimeBaseInterface.get() );
+	AddInterface( mPacketLevelDecodeInterface.get() );
 
 	AddExportOption( 0, "Export as text/csv file" );
-	AddExportExtension( 0, "text", "txt" );
-	AddExportExtension( 0, "csv", "csv" );
+	AddExportExtension( 0, "csv", "csv" ); // this might be interesting some day
 
 	ClearChannels();
 	AddChannel( mInputChannel, "B&O Onewire", false );
@@ -35,7 +41,7 @@ BOWireAnalyzerSettings::~BOWireAnalyzerSettings()
 bool BOWireAnalyzerSettings::SetSettingsFromInterfaces()
 {
 	mInputChannel = mInputChannelInterface->GetChannel();
-	mTimeBase_us = mBitRateInterface->GetInteger();
+	mTimeBase_us = mTimeBaseInterface->GetInteger();
 
 	ClearChannels();
 	AddChannel( mInputChannel, "B&O Onewire DATA", true );
@@ -47,7 +53,7 @@ bool BOWireAnalyzerSettings::SetSettingsFromInterfaces()
 void BOWireAnalyzerSettings::UpdateInterfacesFromSettings()
 {
 	mInputChannelInterface->SetChannel( mInputChannel );
-	mBitRateInterface->SetInteger( mTimeBase_us );
+	mTimeBaseInterface->SetInteger( mTimeBase_us );
 }
 
 void BOWireAnalyzerSettings::LoadSettings( const char* settings )
@@ -57,6 +63,7 @@ void BOWireAnalyzerSettings::LoadSettings( const char* settings )
 
 	text_archive >> mInputChannel;
 	text_archive >> mTimeBase_us;
+	// text_archive >> mPacketLevelDecodeInterface;
 
 	ClearChannels();
 	AddChannel( mInputChannel, "B&O Onewire", true );
@@ -70,6 +77,7 @@ const char* BOWireAnalyzerSettings::SaveSettings()
 
 	text_archive << mInputChannel;
 	text_archive << mTimeBase_us;
+	// text_archive << mPacketLevelDecodeInterface;
 
 	return SetReturnString( text_archive.GetString() );
 }

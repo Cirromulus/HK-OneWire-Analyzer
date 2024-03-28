@@ -22,7 +22,8 @@ public:
 
 protected:
 	std::unique_ptr< AnalyzerSettingInterfaceChannel >	mInputChannelInterface;
-	std::unique_ptr< AnalyzerSettingInterfaceInteger >	mBitRateInterface;
+	std::unique_ptr< AnalyzerSettingInterfaceInteger >	mTimeBaseInterface;
+	std::unique_ptr< AnalyzerSettingInterfaceNumberList > mPacketLevelDecodeInterface;
 };
 
 #endif //BOWIRE_ANALYZER_SETTINGS
