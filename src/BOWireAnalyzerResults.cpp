@@ -7,6 +7,8 @@
 #include <iostream>
 #include <fstream>
 
+using namespace BOWire;
+
 BOWireAnalyzerResults::BOWireAnalyzerResults( BOWireAnalyzer* analyzer, BOWireAnalyzerSettings* settings )
 :	AnalyzerResults(),
 	mSettings( settings ),
@@ -20,8 +22,6 @@ BOWireAnalyzerResults::~BOWireAnalyzerResults()
 
 void BOWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channel, DisplayBase display_base )
 {
-	using namespace BOWire;
-
 	ClearResultStrings();
 	Frame frame = GetFrame( frame_index );
 	const auto& state = static_cast<WordState>(frame.mType);
@@ -71,28 +71,77 @@ void BOWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 {
 	std::ofstream file_stream( file, std::ios::out );
 
+	// just assume from the first frame. Ugly AF
+	const auto decodeLevel = static_cast<BOWireAnalyzerSettings::DecodeLevel>(GetFrame( 0 ).mFlags);
+
 	U64 trigger_sample = mAnalyzer->GetTriggerSample();
 	U32 sample_rate = mAnalyzer->GetSampleRate();
 
-	file_stream << "Time [s],Value" << std::endl;
+	file_stream << "Time [s], Type, ";
+	// soo ugly, so much redundancy
+	if (decodeLevel == BOWireAnalyzerSettings::commandlevel)
+	{
+		file_stream << "Src, Dst, Cmd, ";
+	}
+	file_stream << "Dat" << std::endl;
 
 	U64 num_frames = GetNumFrames();
 	for( U32 i=0; i < num_frames; i++ )
 	{
 		Frame frame = GetFrame( i );
+		const auto& state = static_cast<WordState>(frame.mType);
+		const auto thisFramesDecodeLevel = static_cast<BOWireAnalyzerSettings::DecodeLevel>(frame.mFlags);
+		if (thisFramesDecodeLevel != decodeLevel)
+			// skip this one. It is different.
+			continue;
 
 		char time_str[128];
 		AnalyzerHelpers::GetTimeString( frame.mStartingSampleInclusive, trigger_sample, sample_rate, time_str, 128 );
+		file_stream << time_str;
 
-		char number_str[128];
-		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, 8, number_str, 128 );
+		if (decodeLevel == BOWireAnalyzerSettings::wordlevel)
+		{
+			file_stream << ", " << getNameOfWordState(state);
+			if (hasWordStateData(state))
+			{
+				char number_str[128];
+				const auto numBits = getBitsPerWord(state).value_or(8);
+				const auto payload = Payload(frame.mData1);
+				const auto data = payload.getWord(state);
+				AnalyzerHelpers::GetNumberString( data, display_base, numBits, number_str, 128 );
+				file_stream << ", " << number_str;
+			}
+		}
+		else
+		{
+			// whole command
+			char src[16];
+			char dst[16];
+			char cmd[16];
+			char data[16] = {0};	// default: none
+			const auto payload = Payload(frame.mData1);
+			const bool withData = state == WordState::end; // it finished data, so is in end bit.
 
-		file_stream << time_str << "," << number_str << std::endl;
+			file_stream << ", " << "command";
+			if (withData)
+				file_stream << " with data";
+
+			AnalyzerHelpers::GetNumberString( payload.source, display_base, *getBitsPerWord(WordState::source), src, 16 );
+			AnalyzerHelpers::GetNumberString( payload.dest, display_base, *getBitsPerWord(WordState::dest), dst, 16 );
+			AnalyzerHelpers::GetNumberString( payload.command, display_base, *getBitsPerWord(WordState::command), cmd, 16 );
+			file_stream << ", " << src << ", " << dst << ", " << cmd;
+			if (withData)
+			{
+				AnalyzerHelpers::GetNumberString( payload.data, display_base, *getBitsPerWord(WordState::data), data, 16 );
+				file_stream << ", " << data;
+			}
+		}
+
+		file_stream << std::endl;
 
 		if( UpdateExportProgressAndCheckForCancel( i, num_frames ) == true )
 		{
-			file_stream.close();
-			return;
+			break;
 		}
 	}
 

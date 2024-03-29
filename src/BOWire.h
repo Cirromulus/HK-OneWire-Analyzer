@@ -76,6 +76,31 @@ namespace BOWire
 		_num
 	};
 
+	constexpr bool
+	isBitValidInState(const WordState& wordState, const BitType& currentBit)
+	{
+		switch (currentBit)
+		{
+			case BitType::start:
+				return wordState == WordState::start;
+			case BitType::data0:
+			case BitType::data1:
+				return hasWordStateData(wordState);
+			case BitType::end:
+				return wordState == WordState::data ||
+						wordState == WordState::end;
+			default:
+				return false;
+		}
+	}
+	static_assert(isBitValidInState(WordState::start, BitType::start), "noy");
+	static_assert(!isBitValidInState(WordState::start, BitType::end), "noy");
+	static_assert(!isBitValidInState(WordState::source, BitType::start), "noy");
+	static_assert(isBitValidInState(WordState::source, BitType::data0), "noy");
+	static_assert(isBitValidInState(WordState::data, BitType::end), "noy");
+	static_assert(isBitValidInState(WordState::end, BitType::end), "noy");
+
+
 	struct Waveform
 	{
 		Ticks low;
@@ -256,29 +281,20 @@ namespace BOWire
 		{
 			const auto expectedBitsInThisState = getBitsPerWord(wordState);
 			if (!expectedBitsInThisState.has_value())
-				return std::nullopt;
-
-			// normal transition always allowed
-			if (currentNumberOfBitsReceived == *expectedBitsInThisState)
-				return true;
-
-			if (currentBit == BitType::end)
 			{
-				// partial (early transition is only allowed
-				// completed a whole command (and expecting data)
-				if (wordState == WordState::data &&
-					currentNumberOfBitsReceived == 1)	// the stop bit
-				{
-					return true;
-				}
-				else
-				{
-					return std::nullopt; // end bit not aligned?
-				}
+				// invalid state or something
+				return std::nullopt;
 			}
 
-			// not enough bits or no end bit
-			return false;
+			if (!isBitValidInState(wordState, currentBit))
+			{
+				return std::nullopt;
+			}
+			// from here on, a end-bit is always valid
+
+			// normal transition
+			return currentNumberOfBitsReceived == *expectedBitsInThisState ||
+			       (currentBit == BitType::end && currentNumberOfBitsReceived == 1); // the first
 		}
 
 		constexpr void

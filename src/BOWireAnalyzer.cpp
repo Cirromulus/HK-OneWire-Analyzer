@@ -247,6 +247,13 @@ BOWireAnalyzer::addCommandFrame(const BOWire::BOWireState& state, const U32& end
 		frame_v2.AddByteArray(getNameOfWordState(WordState::data), reinterpret_cast<const U8*>(&state.payload.data), 2);
 	}
 	mResults->AddFrameV2( frame_v2, type, state.startOfTransmission, endOfTransmission );
+
+	// debugging
+	if (state.startOfTransmission == 0)
+	{
+		cerr << "Is something fishy?" << endl;
+	}
+
 	// no commit, because this is done somewhere else
 }
 
