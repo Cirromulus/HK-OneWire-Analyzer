@@ -1,6 +1,6 @@
-# WIP Analyzer for the Harman / Kardon OneWire-like communication protocol in the Festival 500 sound system.
+# Analyzer for the Harman / Kardon OneWire-like communication protocol in the Festival 500 sound system.
 
-TODO: More description.
+TODO: More description. WIP.
 
 ## Summary
 
@@ -48,9 +48,16 @@ TODO. See code.
 
 ## High-Level transactions
 
-TODO: Don't know yet.
+TODO: More. Also perhaps build an [extension](https://support.saleae.com/extensions/high-level-analyzer-extensions) for it.
 
+|  ID  | Name  |
+| ---- | ----- |
+| `0x0`| Probably the Tuner (or display?) |
+| `0xC`| Probably the Tape Deck |
 
+| Command | Type | Data | 
+| ------- | ---- | ---- |
+| `0x0C`  | Set Time display | BCD-Like MM:SS, e.g. `0x0159` for 01:59 |
 
 ## Updating an Existing Analyzer to use CMake & GitHub Actions
 
