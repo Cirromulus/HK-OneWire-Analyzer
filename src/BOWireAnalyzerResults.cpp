@@ -62,7 +62,11 @@ void BOWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channe
 		AnalyzerHelpers::GetNumberString( payload.dest, display_base, *getBitsPerWord(WordState::dest), dst, 16 );
 		AnalyzerHelpers::GetNumberString( payload.command, display_base, *getBitsPerWord(WordState::command), cmd, 16 );
 		if (withData)
-			AnalyzerHelpers::GetNumberString( payload.getDataInHostOrder(), display_base, *getBitsPerWord(WordState::data), data, 16 );
+		{
+			// ugly as fuck, for separation
+			data[0] = ' ';
+			AnalyzerHelpers::GetNumberString( payload.getDataInHostOrder(), display_base, *getBitsPerWord(WordState::data), data + 1, 16 );
+		}
 
 		AddResultString(src, " -> ", dst, " : ", cmd, data);
 	}
