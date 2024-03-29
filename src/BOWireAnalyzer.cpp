@@ -122,7 +122,11 @@ void BOWireAnalyzer::WorkerThread()
 				markerType = AnalyzerResults::Zero;
 				break;
 			case BitType::end:
-				markerType = AnalyzerResults::Stop;
+				markerType = isShortHigh ? AnalyzerResults::Dot : AnalyzerResults::Stop;
+				// this could indicate the actual state, but
+				// knowledge about whether we had data is
+				// easier to keep with the state than an extra bool
+				// state.consumeBit(bitType);
 				break;
 			default:
 				cerr << "Üeh, unknown bit type! (" << to_underlying(bitType) <<
@@ -133,8 +137,8 @@ void BOWireAnalyzer::WorkerThread()
 		mResults->AddMarker(centerOfLowPulse, markerType, mSettings->mInputChannel);
 
 		// check for transition
-		const auto expectedBitsInThisState = getBitsPerWord(state.wordState);
-		if (! expectedBitsInThisState.has_value())
+		const auto canAdvanceState = state.canAdvanceState(bitType);
+		if (! canAdvanceState.has_value())
 		{
 			cerr << "We over-stated our state (" << to_underlying(state.wordState) <<
 						")" << endl;
@@ -146,15 +150,18 @@ void BOWireAnalyzer::WorkerThread()
 			mResults->CancelPacketAndStartNewPacket();
 			continue;
 		}
-		if (state.currentNumberOfBitsReceived == *expectedBitsInThisState)
+		if (canAdvanceState.value())
 		{
 			// in word level, we don't care about the actual state
 			const bool wordlevelProduceFrame =
 					(mSettings->mDecodeLevel == BOWireAnalyzerSettings::wordlevel) &&
-					hasWordStateData(state.wordState);
+					// don't want to produce end frame info here
+					hasWordStateData(state.wordState) && bitType != BitType::end;
+
 			const bool commandLevelProduceFrame =
 					(mSettings->mDecodeLevel == BOWireAnalyzerSettings::commandlevel) &&
 					(bitType == BitType::end);
+
 			if (wordlevelProduceFrame || commandLevelProduceFrame)
 			{
 				//print out a Frame
@@ -234,7 +241,7 @@ BOWireAnalyzer::addCommandFrame(const BOWire::BOWireState& state, const U32& end
 	frame_v2.AddByte(getNameOfWordState(WordState::source), state.payload.getWord(WordState::source));
 	frame_v2.AddByte(getNameOfWordState(WordState::dest), state.payload.getWord(WordState::dest));
 	frame_v2.AddByte(getNameOfWordState(WordState::command), state.payload.getWord(WordState::command));
-	if (state.wordState == WordState::data || state.wordState == WordState::endBit)
+	if (state.wordState == WordState::data || state.wordState == WordState::end)
 	{
 		type = "command with data";
 		frame_v2.AddByteArray(getNameOfWordState(WordState::data), reinterpret_cast<const U8*>(&state.payload.data), 2);

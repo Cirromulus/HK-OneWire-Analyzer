@@ -20,8 +20,7 @@ namespace BOWire
 		command,
 		// data optional
 		data,
-		endBit,
-
+		end,
 		_num
 	};
 
@@ -42,7 +41,7 @@ namespace BOWire
 				return 8;
 			case WordState::data:
 				return 16;
-			case WordState::endBit:
+			case WordState::end:
 				return 1;
 			default:
 				return std::nullopt;
@@ -240,24 +239,59 @@ namespace BOWire
 		U32 startOfTransmission;
 		U32 startOfCurrentWord;
 		Bits currentNumberOfBitsReceived;
-		WordState wordState;
+		WordState wordState;	// read: _expecting_ this state.
 		Payload payload;
-		bool withData;
 
 		constexpr BOWireState(U32 startOfTransmission = 0)
 			: startOfTransmission{startOfTransmission},
 			  startOfCurrentWord{startOfTransmission},
 			  currentNumberOfBitsReceived{0},
 			  wordState{WordState::start},
-			  payload{0,0,0,0}, withData{false}
+			  payload{0,0,0,0}
 		{
+		}
+
+		constexpr std::optional<bool>
+		canAdvanceState(const BitType& currentBit)
+		{
+			const auto expectedBitsInThisState = getBitsPerWord(wordState);
+			if (!expectedBitsInThisState.has_value())
+				return std::nullopt;
+
+			// normal transition always allowed
+			if (currentNumberOfBitsReceived == *expectedBitsInThisState)
+				return true;
+
+			if (currentBit == BitType::end)
+			{
+				// partial (early transition is only allowed
+				// completed a whole command (and expecting data)
+				if (wordState == WordState::data &&
+					currentNumberOfBitsReceived == 1)	// the stop bit
+				{
+					return true;
+				}
+				else
+				{
+					return std::nullopt; // end bit not aligned?
+				}
+			}
+
+			// not enough bits or no end bit
+			return false;
+		}
+
+		constexpr void
+		setState(const WordState& newState)
+		{
+			wordState = newState;
+			currentNumberOfBitsReceived = 0;
 		}
 
 		constexpr void
 		advanceState()
 		{
-			wordState = static_cast<WordState>(std::to_underlying(wordState) + 1);
-			currentNumberOfBitsReceived = 0;
+			setState(static_cast<WordState>(std::to_underlying(wordState) + 1));
 		}
 
 		constexpr void
@@ -298,7 +332,7 @@ namespace BOWire
 				return "command";
 			case WordState::data:
 				return "data";
-			case WordState::endBit:
+			case WordState::end:
 				return "end";
 			default:
 				return "unknown!";

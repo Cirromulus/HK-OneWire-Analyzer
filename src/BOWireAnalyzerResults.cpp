@@ -54,7 +54,7 @@ void BOWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channe
 		char data[16] = {0};	// default: none
 		const auto payload = Payload(frame.mData1);
 
-		const bool withData = state == WordState::endBit; // it finished data, so is in end bit.
+		const bool withData = state == WordState::end; // it finished data, so is in end bit.
 
 		AnalyzerHelpers::GetNumberString( payload.source, display_base, *getBitsPerWord(WordState::source), src, 16 );
 		AnalyzerHelpers::GetNumberString( payload.dest, display_base, *getBitsPerWord(WordState::dest), dst, 16 );
