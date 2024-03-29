@@ -53,9 +53,11 @@ TODO: More. Also perhaps build an [extension](https://support.saleae.com/extensi
 |  ID  | Name  |
 | ---- | ----- |
 | `0x0`| Probably the Tuner (or display?) |
-| `0xC`| Probably the Tape Deck |
+| `0x3`| Probably the Tape Deck |
+| `0x4`| ?? Only acted as destination, perhaps CD ?|
+| `0x6`| ?? |
 
-| Command | Type | Data | 
+| Command | Type | Data |
 | ------- | ---- | ---- |
 | `0x0C`  | Set Time display | BCD-Like MM:SS, e.g. `0x0159` for 01:59 |
 

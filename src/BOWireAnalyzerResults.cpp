@@ -83,11 +83,11 @@ void BOWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 	U64 trigger_sample = mAnalyzer->GetTriggerSample();
 	U32 sample_rate = mAnalyzer->GetSampleRate();
 
-	file_stream << "Time [s], Type, ";
+	file_stream << "Time [s],Type,";
 	// soo ugly, so much redundancy
 	if (decodeLevel == BOWireAnalyzerSettings::commandlevel)
 	{
-		file_stream << "Src, Dst, Cmd, ";
+		file_stream << "Src,Dst,Cmd,";
 	}
 	file_stream << "Dat" << std::endl;
 
@@ -107,7 +107,7 @@ void BOWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 
 		if (decodeLevel == BOWireAnalyzerSettings::wordlevel)
 		{
-			file_stream << ", " << getNameOfWordState(state);
+			file_stream << "," << getNameOfWordState(state);
 			if (hasWordStateData(state))
 			{
 				char number_str[128];
@@ -115,7 +115,7 @@ void BOWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 				const auto payload = Payload(frame.mData1);
 				const auto data = payload.getWord(state);
 				AnalyzerHelpers::GetNumberString( data, display_base, numBits, number_str, 128 );
-				file_stream << ", " << number_str;
+				file_stream << "," << number_str;
 			}
 		}
 		else
@@ -128,18 +128,18 @@ void BOWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 			const auto payload = Payload(frame.mData1);
 			const bool withData = state == WordState::end; // it finished data, so is in end bit.
 
-			file_stream << ", " << "command";
+			file_stream << "," << "command";
 			if (withData)
 				file_stream << " with data";
 
 			AnalyzerHelpers::GetNumberString( payload.source, display_base, *getBitsPerWord(WordState::source), src, 16 );
 			AnalyzerHelpers::GetNumberString( payload.dest, display_base, *getBitsPerWord(WordState::dest), dst, 16 );
 			AnalyzerHelpers::GetNumberString( payload.command, display_base, *getBitsPerWord(WordState::command), cmd, 16 );
-			file_stream << ", " << src << ", " << dst << ", " << cmd;
+			file_stream << "," << src << "," << dst << "," << cmd;
 			if (withData)
 			{
 				AnalyzerHelpers::GetNumberString( payload.getDataInHostOrder(), display_base, *getBitsPerWord(WordState::data), data, 16 );
-				file_stream << ", " << data;
+				file_stream << "," << data;
 			}
 		}
 
