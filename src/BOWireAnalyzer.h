@@ -35,11 +35,11 @@ protected: //vars
 private:
 	// simple dispatcher to Word or command frame functions
 	void
-	addFrame(const BOWire::BOWireState& state, const U32& now);
+	addFrame(const BOWire::BOWireState& state, const U32& endOfTransmission);
 	void
-	addWordFrame(const BOWire::BOWireState& state, const U32& now);
+	addWordFrame(const BOWire::BOWireState& state, const U32& endOfTransmission);
 	void
-	addCommandFrame(const BOWire::BOWireState& state, const U32& now);
+	addCommandFrame(const BOWire::BOWireState& state, const U32& endOfTransmission);
 
 };
 

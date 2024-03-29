@@ -164,8 +164,7 @@ void BOWireAnalyzer::WorkerThread()
 			}
 
 			// advance
-			state.wordState = static_cast<WordState>(to_underlying(state.wordState) + 1);
-			state.currentNumberOfBitsReceived = 0;
+			state.advanceState();
 
 			// commit markers and maybe frame
 			mResults->CommitResults();
