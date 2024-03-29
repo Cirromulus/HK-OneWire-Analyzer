@@ -49,7 +49,7 @@ void BOWireAnalyzer::WorkerThread()
 		}
 		const auto fallingEdge = mChannelData->GetSampleNumber();
 		mChannelData->AdvanceToNextEdge();
-		const auto risingEdge = mChannelData->GetSampleNumber(); //rising edge
+		const auto risingEdge = mChannelData->GetSampleNumber();
 
 		const auto lowPulseLength = risingEdge - fallingEdge;
 		const auto centerOfLowPulse = fallingEdge + lowPulseLength / 2;
@@ -80,16 +80,19 @@ void BOWireAnalyzer::WorkerThread()
 		// }
 
 		// check duration of stop (high) pulse
-		const Ticks safetyMargin = 1;
 		// end byte only differs by high-duration.
-		// This is observed to be about 8ms.
+		// This is observed to be about 8ms, or just one Tick if busy.
 		// Could be checked by "busy" line,
-		// but this is not necessary (just greater than 2 ticks or equal to one tick, TODO)
+		// but this is not necessary (just greater than 2 ticks or equal to one tick)
 		// or implied through the number of observed bits (TODO)
-		const auto samplingPointStopBit = expectedNextLowEdge + samplesPerTick * safetyMargin;
-		if ( !mChannelData->WouldAdvancingToAbsPositionCauseTransition(samplingPointStopBit))
+		const auto samplingOffset = samplesPerTick / 2;
+		const auto oneTick  = samplesPerTick;
+		const auto twoTicks = samplesPerTick * 2;
+		const auto isShortHigh = mChannelData->WouldAdvancingCauseTransition(oneTick + samplingOffset);
+		const auto isLongHigh = !mChannelData->WouldAdvancingCauseTransition(twoTicks + samplingOffset);
+		if (isShortHigh || isLongHigh)
 		{
-			// override bit type
+			// this is an end bit
 			bitType = BitType::end;
 		}
 
@@ -119,7 +122,6 @@ void BOWireAnalyzer::WorkerThread()
 				break;
 			case BitType::end:
 				markerType = AnalyzerResults::Stop;
-				// mResults->CommitPacketAndStartNewPacket not needed here, as this produces no frames
 				break;
 			default:
 				cerr << "Üeh, unknown bit type! (" << to_underlying(bitType) <<
