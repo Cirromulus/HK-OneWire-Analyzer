@@ -241,7 +241,7 @@ BOWireAnalyzer::addCommandFrame(const BOWire::BOWireState& state, const U32& end
 	frame_v2.AddByte(getNameOfWordState(WordState::source), state.payload.getWord(WordState::source));
 	frame_v2.AddByte(getNameOfWordState(WordState::dest), state.payload.getWord(WordState::dest));
 	frame_v2.AddByte(getNameOfWordState(WordState::command), state.payload.getWord(WordState::command));
-	if (state.wordState == WordState::data || state.wordState == WordState::end)
+	if (state.wordState == WordState::end) // i.e. "after data". again: read _expected_ word state!
 	{
 		type = "command with data";
 		frame_v2.AddByteArray(getNameOfWordState(WordState::data), reinterpret_cast<const U8*>(&state.payload.data), 2);
