@@ -6,6 +6,7 @@
 #include <utility>
 #include <array>
 #include <assert.h>
+#include <endian.h>
 
 namespace BOWire
 {
@@ -184,7 +185,7 @@ namespace BOWire
 		U8 source : 4;
 		U8 dest : 4;
 		U8 command;
-		U16 data;
+		U16 data;	// Big endian
 
 		constexpr Payload(U8 s, U8 d, U8 c, U16 dat)
 			: source{s}, dest{d}, command{c}, data{dat}
@@ -195,7 +196,7 @@ namespace BOWire
 			source = serialized & 0x0F;
 			dest = (serialized & 0xF0) >> 4;
 			command = (serialized & 0xFF00) >> 8;
-			data = (serialized & 0xFFFF0000) >> 16;
+			data = le16toh((serialized & 0xFFFF0000) >> 16);	// I don't understand why that works, but it works... k?
 		}
 
 		constexpr
@@ -206,7 +207,7 @@ namespace BOWire
 			ret |= source & 0xF;
 			ret |= (dest & 0xF) << 4;
 			ret |= command << 8;
-			ret |= data << 16;
+			ret |= getDataInHostOrder() << 16;
 			return ret;
 		}
 
@@ -214,24 +215,26 @@ namespace BOWire
 		constexpr void
 		setBit(const WordState& state, const U8& bitOffset)
 		{
-			if (bitOffset >= getBitsPerWord(state))
+			const auto expectedBits = getBitsPerWord(state).value_or(0);
+			if (bitOffset >= expectedBits)
 			{
 				// this should not happen.
 				return;
 			}
+			const U8 msbFirstOffset = (expectedBits - 1) - bitOffset;
 			switch (state)
 			{
 			case WordState::source:
-				source |= 1 << bitOffset;
+				source |= 1 << msbFirstOffset;
 				break;
 			case WordState::dest:
-				dest |= 1 << bitOffset;
+				dest |= 1 << msbFirstOffset;
 				break;
 			case WordState::command:
-				command |= 1 << bitOffset;
+				command |= 1 << msbFirstOffset;
 				break;
 			case WordState::data:
-				data |= 1 << bitOffset;
+				data |= 1 << msbFirstOffset;
 				break;
 			default:
 				break;
@@ -251,12 +254,20 @@ namespace BOWire
 			case WordState::command:
 				return command;
 			case WordState::data:
-				return data;
+				return getDataInHostOrder();
 			default:
 				// should not happen
 				return 0;
 			}
 		}
+
+		constexpr
+		U16
+		getDataInHostOrder() const
+		{
+			return be16toh(data);
+		}
+
 	};
 
 	struct BOWireState

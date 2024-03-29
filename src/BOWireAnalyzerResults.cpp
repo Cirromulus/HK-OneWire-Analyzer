@@ -4,6 +4,8 @@
 #include "BOWireAnalyzerSettings.h"
 #include "BOWire.h"
 
+#include <arpa/inet.h> // E.T., are you there?
+
 #include <iostream>
 #include <fstream>
 
@@ -60,7 +62,7 @@ void BOWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channe
 		AnalyzerHelpers::GetNumberString( payload.dest, display_base, *getBitsPerWord(WordState::dest), dst, 16 );
 		AnalyzerHelpers::GetNumberString( payload.command, display_base, *getBitsPerWord(WordState::command), cmd, 16 );
 		if (withData)
-			AnalyzerHelpers::GetNumberString( payload.data, display_base, *getBitsPerWord(WordState::data), data, 16 );
+			AnalyzerHelpers::GetNumberString( payload.getDataInHostOrder(), display_base, *getBitsPerWord(WordState::data), data, 16 );
 
 		AddResultString(src, " -> ", dst, " : ", cmd, data);
 	}
@@ -132,7 +134,7 @@ void BOWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 			file_stream << ", " << src << ", " << dst << ", " << cmd;
 			if (withData)
 			{
-				AnalyzerHelpers::GetNumberString( payload.data, display_base, *getBitsPerWord(WordState::data), data, 16 );
+				AnalyzerHelpers::GetNumberString( payload.getDataInHostOrder(), display_base, *getBitsPerWord(WordState::data), data, 16 );
 				file_stream << ", " << data;
 			}
 		}
@@ -151,22 +153,24 @@ void BOWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 void BOWireAnalyzerResults::GenerateFrameTabularText( U64 frame_index, DisplayBase display_base )
 {
 #ifdef SUPPORTS_PROTOCOL_SEARCH
-	using namespace BOWire;
-	Frame frame = GetFrame( frame_index );
-	ClearTabularText();
-	const auto& state = static_cast<WordState>(frame.mType);
-	const char* type = getNameOfWordState(state);
-	if (hasWordStateData(state))
-	{
-		char number_str[128];
-		const auto numBits = getBitsPerWord(state).value_or(4);
-		AnalyzerHelpers::GetNumberString( frame.mData1, display_base, numBits, number_str, 128 );
-		AddTabularText( type, " ", number_str );
-	}
-	else
-	{
-		AddTabularText( type );
-	}
+	// we use V2 frames
+
+	// using namespace BOWire;
+	// Frame frame = GetFrame( frame_index );
+	// ClearTabularText();
+	// const auto& state = static_cast<WordState>(frame.mType);
+	// const char* type = getNameOfWordState(state);
+	// if (hasWordStateData(state))
+	// {
+	// 	char number_str[128];
+	// 	const auto numBits = getBitsPerWord(state).value_or(4);
+	// 	AnalyzerHelpers::GetNumberString( frame.mData1, display_base, numBits, number_str, 128 );
+	// 	AddTabularText( type, " ", number_str );
+	// }
+	// else
+	// {
+	// 	AddTabularText( type );
+	// }
 #endif
 }
 

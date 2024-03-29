@@ -15,6 +15,7 @@ include(ExternalAnalyzerSDK)
 set(CMAKE_CXX_STANDARD 23)
 
 set(SOURCES
+src/BOWire_test.cpp
 src/BOWireAnalyzer.cpp
 src/BOWireAnalyzer.h
 src/BOWireAnalyzerResults.cpp

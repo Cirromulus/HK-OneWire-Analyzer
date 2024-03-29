@@ -3,6 +3,7 @@
 #include "BOWire.h"
 #include <AnalyzerChannelData.h>
 
+#include <arpa/inet.h> // E.T., are you there?
 #include <iostream>
 
 using namespace BOWire;
@@ -217,7 +218,8 @@ BOWireAnalyzer::addWordFrame(const BOWire::BOWireState& state, const U32& endOfT
 	}
 	else
 	{
-		frame_v2.AddByteArray(type, reinterpret_cast<const U8*>(&state.payload.data), 2);
+		const auto hoData = state.payload.getDataInHostOrder(); // ??
+		frame_v2.AddByteArray(type, reinterpret_cast<const U8*>(&hoData), sizeof(decltype(hoData)));
 	}
 	mResults->AddFrameV2( frame_v2, type, state.startOfCurrentWord, endOfTransmission );
 	// no commit, because this is done somewhere else
@@ -244,7 +246,8 @@ BOWireAnalyzer::addCommandFrame(const BOWire::BOWireState& state, const U32& end
 	if (state.wordState == WordState::end) // i.e. "after data". again: read _expected_ word state!
 	{
 		type = "command with data";
-		frame_v2.AddByteArray(getNameOfWordState(WordState::data), reinterpret_cast<const U8*>(&state.payload.data), 2);
+		const auto hoData = state.payload.getDataInHostOrder();
+		frame_v2.AddByteArray(getNameOfWordState(WordState::data), reinterpret_cast<const U8*>(&hoData), sizeof(decltype(hoData)));
 	}
 	mResults->AddFrameV2( frame_v2, type, state.startOfTransmission, endOfTransmission );
 
