@@ -33,8 +33,14 @@ protected: //vars
 	bool mSimulationInitilized;
 
 private:
+	// simple dispatcher to Word or command frame functions
 	void
 	addFrame(const BOWire::BOWireState& state, const U32& now);
+	void
+	addWordFrame(const BOWire::BOWireState& state, const U32& now);
+	void
+	addCommandFrame(const BOWire::BOWireState& state, const U32& now);
+
 };
 
 extern "C" ANALYZER_EXPORT const char* __cdecl GetAnalyzerName();

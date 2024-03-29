@@ -71,7 +71,8 @@ void BOWireAnalyzer::WorkerThread()
 		}
 		auto& bitType = *maybeBitType;
 
-		// for(Ticks i=0; i < maxLowTicks; i++ )
+		// // this does not work, because it advances the mResults time pointer too far
+		// for(Ticks i=0; i < waveform.low; i++ )
 		// {
 		// 	//let's put a dot for every tick counter (just cosmetics)
 		// 	mResults->AddMarker(fallingEdge + i * samplesPerTick,
@@ -157,7 +158,7 @@ void BOWireAnalyzer::WorkerThread()
 			if (wordlevelProduceFrame || commandLevelProduceFrame)
 			{
 				//print out a Frame
-				const auto& endOfFrame = risingEdge;
+				const auto& endOfFrame = risingEdge + oneTick;
 				addFrame(state, endOfFrame);
 				ReportProgress( endOfFrame );
 			}
@@ -174,12 +175,25 @@ void BOWireAnalyzer::WorkerThread()
 }
 
 void
-BOWireAnalyzer::addFrame(const BOWire::BOWireState& state, const U32& now)
+BOWireAnalyzer::addFrame(const BOWire::BOWireState& state, const U32& endOfTransmission)
+{
+	if (mSettings->mDecodeLevel == BOWireAnalyzerSettings::wordlevel)
+	{
+		addWordFrame(state, endOfTransmission);
+	}
+	else if (mSettings->mDecodeLevel == BOWireAnalyzerSettings::commandlevel)
+	{
+		addCommandFrame(state, endOfTransmission);
+	}
+	// no commit, because this is done somewhere else
+}
+
+void
+BOWireAnalyzer::addWordFrame(const BOWire::BOWireState& state, const U32& endOfTransmission)
 {
 	// inspired by one-wire: just generate both v1 and v2 frames, lolo
-	const auto& endOfTransmission = now;
 
-	Frame frame;	// needed for bubble text
+	Frame frame;		// needed for bubble text
 	frame.mStartingSampleInclusive = state.startOfCurrentWord;
 	frame.mEndingSampleInclusive = endOfTransmission;
 	frame.mData1 = state.payload.getSerialized();
@@ -188,36 +202,45 @@ BOWireAnalyzer::addFrame(const BOWire::BOWireState& state, const U32& now)
 	frame.mFlags = mSettings->mDecodeLevel;
 	mResults->AddFrame( frame );
 
-	FrameV2 frame_v2;
-	if (mSettings->mDecodeLevel == BOWireAnalyzerSettings::wordlevel)
+	FrameV2 frame_v2;	// nice for table
+	const char* type = getNameOfWordState(state.wordState);
+	const auto wordWidth = getBitsPerWord(state.wordState).value_or(8);
+	if (wordWidth <= 8)
 	{
-		const char* type = getNameOfWordState(state.wordState);
-		const auto wordWidth = getBitsPerWord(state.wordState).value_or(8);
-		if (wordWidth <= 8)
-		{
-			frame_v2.AddByte(type, state.payload.getWord(state.wordState));
-		}
-		else
-		{
-			frame_v2.AddByteArray(type, reinterpret_cast<const U8*>(&state.payload.data), 2);
-		}
-		mResults->AddFrameV2( frame_v2, type, state.startOfCurrentWord, endOfTransmission );
+		frame_v2.AddByte(type, state.payload.getWord(state.wordState));
 	}
 	else
 	{
-		//  commandlevel
-		const char* type = "command";
-		frame_v2.AddByte(getNameOfWordState(WordState::source), state.payload.getWord(WordState::source));
-		frame_v2.AddByte(getNameOfWordState(WordState::dest), state.payload.getWord(WordState::dest));
-		frame_v2.AddByte(getNameOfWordState(WordState::command), state.payload.getWord(WordState::command));
-		if (state.wordState == WordState::data || state.wordState == WordState::endBit)
-		{
-			type = "command with data";
-			frame_v2.AddByteArray(getNameOfWordState(WordState::data), reinterpret_cast<const U8*>(&state.payload.data), 2);
-		}
-		mResults->AddFrameV2( frame_v2, type, state.startOfTransmission, endOfTransmission );
+		frame_v2.AddByteArray(type, reinterpret_cast<const U8*>(&state.payload.data), 2);
 	}
+	mResults->AddFrameV2( frame_v2, type, state.startOfCurrentWord, endOfTransmission );
+	// no commit, because this is done somewhere else
+}
 
+void
+BOWireAnalyzer::addCommandFrame(const BOWire::BOWireState& state, const U32& endOfTransmission)
+{
+	// inspired by one-wire: just generate both v1 and v2 frames, lolo
+	Frame frame;		// needed for bubble text
+	frame.mStartingSampleInclusive = state.startOfTransmission;
+	frame.mEndingSampleInclusive = endOfTransmission;
+	frame.mData1 = state.payload.getSerialized();
+	//frame.mData2 = some_more_data_we_collected;
+	frame.mType = to_underlying(state.wordState);
+	frame.mFlags = mSettings->mDecodeLevel;
+	mResults->AddFrame( frame );
+
+	FrameV2 frame_v2;	// nice for table
+	const char* type = "command";
+	frame_v2.AddByte(getNameOfWordState(WordState::source), state.payload.getWord(WordState::source));
+	frame_v2.AddByte(getNameOfWordState(WordState::dest), state.payload.getWord(WordState::dest));
+	frame_v2.AddByte(getNameOfWordState(WordState::command), state.payload.getWord(WordState::command));
+	if (state.wordState == WordState::data || state.wordState == WordState::endBit)
+	{
+		type = "command with data";
+		frame_v2.AddByteArray(getNameOfWordState(WordState::data), reinterpret_cast<const U8*>(&state.payload.data), 2);
+	}
+	mResults->AddFrameV2( frame_v2, type, state.startOfTransmission, endOfTransmission );
 	// no commit, because this is done somewhere else
 }
 

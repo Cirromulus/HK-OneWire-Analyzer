@@ -62,7 +62,7 @@ void BOWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channe
 		if (withData)
 			AnalyzerHelpers::GetNumberString( payload.data, display_base, *getBitsPerWord(WordState::data), data, 16 );
 
-		AddResultString(src, "->", dst, ":", cmd, data);
+		AddResultString(src, " -> ", dst, " : ", cmd, data);
 	}
 
 }
