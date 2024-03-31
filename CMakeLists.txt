@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.13)
 
-project(BOWireAnalyzer)
+project(HKWireAnalyzer)
 
 add_definitions( -DLOGIC2 )
 
@@ -15,15 +15,13 @@ include(ExternalAnalyzerSDK)
 set(CMAKE_CXX_STANDARD 23)
 
 set(SOURCES
-src/BOWire_test.cpp
-src/BOWireAnalyzer.cpp
-src/BOWireAnalyzer.h
-src/BOWireAnalyzerResults.cpp
-src/BOWireAnalyzerResults.h
-src/BOWireAnalyzerSettings.cpp
-src/BOWireAnalyzerSettings.h
-src/BOWireSimulationDataGenerator.cpp
-src/BOWireSimulationDataGenerator.h
+src/HKWire.cpp
+src/HKWireAnalyzer.cpp
+src/HKWireAnalyzer.h
+src/HKWireAnalyzerResults.cpp
+src/HKWireAnalyzerResults.h
+src/HKWireAnalyzerSettings.cpp
+src/HKWireAnalyzerSettings.h
 )
 
 add_analyzer_plugin(${PROJECT_NAME} SOURCES ${SOURCES})

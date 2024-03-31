@@ -60,7 +60,7 @@ Recorded IDs
 | `0`| Probably the Tuner (or display?) |
 | `3`| Probably the Tape Deck |
 | `4`| ?? Only acted as destination, perhaps CD, or AMP ?|
-| `6`| ?? |
+| `6`| only startup and off: `6->6 0x20` |
 
 Commands `0` -> `3`
 ----
@@ -70,12 +70,14 @@ Commands `0` -> `3`
 | `17` | Play |
 | `16` | Pause |
 | `1C` | ? Answer to `3->0 : 07`, so perhaps "Ok to go"
-| `05` | ?? Comes directly after `0->4: 07` | 
+| `05` | ?? Comes directly after `0->4: 07` and after startup| 
+| `07` | Eject ? |
 | `0A` | Fast Forward ? |
 | `0B` | Fast Reverse ? |
 | `08` | Increase FF speed |
 | `09` | Increase FR speed |
 | `12` | ?? Comes directly after `08` or `09` |
+| `13` | ?? Comes directly after startup
 | `10` | Dolby: None |
 | `0E` | Dolby: B |
 | `0F` | Dolby: C |
@@ -91,8 +93,11 @@ Commands `3` -> `0`
 | ---- | ----------- | ------
 | `0C` | Set Time display | BCD-Like MM:SS, e.g. `0x0159` for 01:59 |
 | `0D` | Set Time display Negative ? | " |
+| `0F` | Tape deck is present ("in Dolby: C mode?)" |
+| 
 | `10` | Is playing "to the right" |
 | `11` | Is playing "to the left" |
+| `13` | ? Came during FF  |
 | `06` | Status Un-Playable? Eject was pressed, tape coming out
 | `07` | Status    playable? Eject was pressed, tape coming in and small wait time
 
@@ -105,6 +110,9 @@ Other commands
 |   `06`  |  `0->4`   | ? Amp set off ?
 |   `07`  |  `0->4`   | ? Amp set mute ?
 |   `02`  |  `0->0`   | "Off", perhaps 0->0 is broadcast
+|   `01`  |  `0->0`   | "On", perhaps 0->0 is broadcast
+
+
 
 ## Updating an Existing Analyzer to use CMake & GitHub Actions
 
