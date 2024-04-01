@@ -73,8 +73,11 @@ class Hla(HighLevelAnalyzer):
 
     # An optional list of types this analyzer produces: providing a way to customize the way frames are displayed in Logic 2.
     result_types = {
-        'mytype': {
-            'format': 'Output type: {{type}}, Input type: {{data.input_type}}'
+        'command': {
+            'format': '{{data.src}} -> {{data.dst}}: {{data.cmd}}'
+        },
+        'command_with_data': {
+            'format': '{{data.src}} -> {{data.dst}}: {{data.cmd}} {{data.dat}}'
         }
     }
 
@@ -102,10 +105,21 @@ class Hla(HighLevelAnalyzer):
         cmd = frame.data['command'][0]
         cmdname = getCommand(dst, cmd)
 
-        # Return the data frame itself
-        return AnalyzerFrame('HKCommand', frame.start_time, frame.end_time, {
-            'input_type': frame.type,
-            'src' : srcname,
-            'dst' : dstname,
-            'cmd' : cmdname,
-        })
+        if ('data' in frame.data):
+            # TODO: also decode data if known format
+            data = frame.data['data'][0]
+
+            return AnalyzerFrame('command_with_data', frame.start_time, frame.end_time, {
+                'input_type': frame.type,
+                'src' : srcname,
+                'dst' : dstname,
+                'cmd' : cmdname,
+                'dat' : data,
+            })
+        else:
+            return AnalyzerFrame('command', frame.start_time, frame.end_time, {
+                'input_type': frame.type,
+                'src' : srcname,
+                'dst' : dstname,
+                'cmd' : cmdname,
+            })
