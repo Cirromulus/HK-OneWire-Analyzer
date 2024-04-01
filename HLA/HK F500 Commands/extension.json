@@ -1,0 +1,13 @@
+{
+  "name": "HK F500 Commands",
+  "apiVersion": "1.0.0",
+  "author": "Pascal Pieper",
+  "version": "0.0.1",
+  "description": "Annotates HK Onewire commands",
+  "extensions": {
+    "HK F500 Commands": {
+      "type": "HighLevelAnalyzer",
+      "entryPoint": "HighLevelAnalyzer.Hla"
+    }
+  }
+}
