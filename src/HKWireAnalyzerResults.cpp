@@ -84,7 +84,7 @@ void HKWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 
 	file_stream << "Time [s],Type,";
 	// soo ugly, so much redundancy
-	if (decodeLevel == HKWireAnalyzerSettings::commandlevel)
+	if (decodeLevel != HKWireAnalyzerSettings::wordlevel)
 	{
 		file_stream << "Src,Dst,Cmd,";
 	}

@@ -26,8 +26,15 @@ public:
 	enum DecodeLevel : uint8_t
 	{
 		wordlevel = 0,
-		commandlevel
+		commandlevel,
+		textlevel,
 	} mDecodeLevel;
+
+	inline bool
+	isCommandLevel() const
+	{
+		return mDecodeLevel == commandlevel || mDecodeLevel == textlevel;
+	}
 
 protected:
 	std::unique_ptr< AnalyzerSettingInterfaceChannel >	mInputChannelInterface;

@@ -159,7 +159,7 @@ void HKWireAnalyzer::WorkerThread()
 					hasWordStateData(state.wordState) && bitType != BitType::end;
 
 			const bool commandLevelProduceFrame =
-					(mSettings->mDecodeLevel == HKWireAnalyzerSettings::commandlevel) &&
+					mSettings->isCommandLevel() &&
 					(bitType == BitType::end);
 
 			if (wordlevelProduceFrame || commandLevelProduceFrame)
@@ -187,7 +187,7 @@ HKWireAnalyzer::addFrame(const HKWire::HKWireState& state, const U32& endOfTrans
 	{
 		addWordFrame(state, endOfTransmission);
 	}
-	else if (mSettings->mDecodeLevel == HKWireAnalyzerSettings::commandlevel)
+	else if (mSettings->isCommandLevel())
 	{
 		addCommandFrame(state, endOfTransmission);
 	}
@@ -238,7 +238,7 @@ HKWireAnalyzer::addCommandFrame(const HKWire::HKWireState& state, const U32& end
 	frame.mFlags = mSettings->mDecodeLevel;
 	mResults->AddFrame( frame );
 
-	static bool tryDecode = true;	// TODO: Make setting
+	const bool tryDecode = mSettings->mDecodeLevel == HKWireAnalyzerSettings::textlevel;
 
 	FrameV2 frame_v2;	// nice for table
 	const char* type = "command";
@@ -246,6 +246,7 @@ HKWireAnalyzer::addCommandFrame(const HKWire::HKWireState& state, const U32& end
 	const ID src = state.payload.getWord(WordState::source);
 	const ID dst = state.payload.getWord(WordState::dest);
 	const Command cmd = state.payload.getWord(WordState::command);
+
 
 	const auto maybeSrcName = knownIDs.find(src);
 	const auto maybeDstName = knownIDs.find(dst);

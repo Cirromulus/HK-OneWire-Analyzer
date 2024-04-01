@@ -25,6 +25,7 @@ HKWireAnalyzerSettings::HKWireAnalyzerSettings()
 										   "Define word or command level decoding" );
 	mPacketLevelDecodeInterface->AddNumber(wordlevel, "Word level", "Decode individual words");
 	mPacketLevelDecodeInterface->AddNumber(commandlevel, "Command level", "Decode complete commands");
+	mPacketLevelDecodeInterface->AddNumber(textlevel, "Command interpret level", "Decode and (try) interpret complete commands");
 
 	AddInterface( mInputChannelInterface.get() );
 	AddInterface( mTimeBaseInterface.get() );
