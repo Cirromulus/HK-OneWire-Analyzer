@@ -204,13 +204,17 @@ namespace HKWire
 		MaybeDataWord data1;	// Big endian bit
 		MaybeDataWord data2;	// Big endian bit
 
+		constexpr Payload()
+			: source{0}, dest{0}, command{0}, data1{}, data2{}
+			{}
 		constexpr Payload(ID s, ID d, Command c,
 		                  MaybeDataWord dat1 = std::nullopt, MaybeDataWord dat2 = std::nullopt)
 			: source{s}, dest{d}, command{c}, data1{dat1}, data2{dat2}
 			{}
 
-		static constexpr size_t hasData1SerializationOffset = sizeof(U32);
-		static constexpr size_t hasData2SerializationOffset = sizeof(U32) + 1;
+		static constexpr size_t hasData1SerializationOffset = sizeof(U32) * 8;
+		static constexpr size_t hasData2SerializationOffset = sizeof(U32) * 8 + 1;
+		static constexpr size_t bit = 1;
 
 		constexpr Payload(U64 serialized)
 		{
@@ -218,9 +222,9 @@ namespace HKWire
 			dest = (serialized & 0xF0) >> 4;
 			command = (serialized & 0xFF00) >> 8;
 			// todo: Knowledge about one/two data word is lossy here, encode in upper bits
-			if (serialized & (1 << hasData1SerializationOffset))
+			if (serialized & (bit << hasData1SerializationOffset))
 				data1 = (serialized & 0x00FF0000) >> 16;
-			if (serialized & (1 << hasData2SerializationOffset))
+			if (serialized & (bit << hasData2SerializationOffset))
 				data2 = (serialized & 0xFF000000) >> (16 + 8);
 		}
 
@@ -228,18 +232,18 @@ namespace HKWire
 		U64
 		getSerialized() const
 		{
-			U32 ret = 0;
+			U64 ret = 0;
 			ret |= source & 0xF;
 			ret |= (dest & 0xF) << 4;
 			ret |= command << 8;
 			if (data1.has_value())
 			{
-				ret |= 1 << hasData1SerializationOffset;
+				ret |= bit << hasData1SerializationOffset;
 				ret |= *data1 << 16;
 			}
 			if (data2.has_value())
 			{
-				ret |= 1 << hasData2SerializationOffset;
+				ret |= bit << hasData2SerializationOffset;
 				ret |= *data2 << (16 + 8);
 			}
 			return ret;
@@ -346,7 +350,7 @@ namespace HKWire
 			  startOfCurrentWord{startOfTransmission},
 			  currentNumberOfBitsReceived{0},
 			  wordState{WordState::start},
-			  payload{0,0,0,0}
+			  payload{}
 		{
 		}
 

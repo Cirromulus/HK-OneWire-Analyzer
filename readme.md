@@ -62,45 +62,56 @@ Recorded IDs
 | `4`| ?? Only acted as destination, perhaps CD, or AMP ?|
 | `6`| only startup and off: `6->6 0x20` |
 
-Commands `0` -> `3`
+Commands `0 -> 3`
 ----
 
 |  ID  | Description | (Data)
 | ---- | ----------- | ------
-| `17` | Play |
-| `16` | Pause |
-| `1C` | ? Answer to `3->0 : 07`, so perhaps "Ok to go"
-| `05` | ?? Comes directly after `0->4: 07` and after startup| 
+| `05` | Stop ?? Comes directly after `0->4: 07` and after startup| 
 | `07` | Eject ? |
-| `0A` | Fast Forward ? |
-| `0B` | Fast Reverse ? |
 | `08` | Increase FF speed |
 | `09` | Increase FR speed |
-| `12` | ?? Comes directly after `08` or `09` |
-| `13` | ?? Comes directly after startup
-| `10` | Dolby: None |
+| `0A` | Fast Forward ? |
+| `0B` | Fast Reverse ? |
 | `0E` | Dolby: B |
 | `0F` | Dolby: C |
-| `1F` | Zero time counter
+| `10` | Dolby: None |
 | `11` | Reverse Playing direction
-| `15` | "Record Awareness?" comes when pressing "Tape" as target, but not yet which norm
+| `12` | ?? Comes directly after `08` or `09` |
+| `13` | ?? Comes directly after startup
+| `15` | Request to record
+| `17` | Play |
+| `16` | Pause |
+| `1C` | ? Answer to `3->0 : 07`, so perhaps "Ok to output", or "request for playing direction"
 | `1E` | RECORD "NORM"
+| `1F` | Zero time counter
 
-Commands `3` -> `0`
+Commands `3 -> 0`
 ----
 
 |  ID  | Description | (Data)
 | ---- | ----------- | ------
+| `05` | ? Comes sometimes after `13` (is it the broadcast stop?)|
+| `06` | Status Un-Playable? Eject was pressed, tape coming out
+| `07` | Status    playable? Eject was pressed, tape coming in and small wait time
 | `0B` | Current FF/FR speed | _Only one byte!_ : lower nibble = speed (1-4), MSBit (`80`) = isReverse |
 | `0C` | Set Time display | BCD-Like MM:SS, e.g. `0x0159` for 01:59 |
 | `0D` | Set Time display Negative ? | " |
 | `0F` | Tape deck is present (in Dolby: C mode?) |
 | `10` | Is playing "to the right" |
 | `11` | Is playing "to the left" |
+| `12` | ?? comes sometimes as answer to `0 -> 3: 12`
 | `13` | ? Came during FF, and after startup |
-| `05` | ? Comes sometimes after `13` |
-| `06` | Status Un-Playable? Eject was pressed, tape coming out
-| `07` | Status    playable? Eject was pressed, tape coming in and small wait time
+| `14` | Can not record (tape was not loaded) |
+| `15` | Able to record (tape was just loaded) |
+
+Broadcast commands `0 -> 0`
+| Command | Direction | Type | Data |
+| ------- | --------- | ---- | ---- |
+|   `01`  |  `0->0`   | System On
+|   `02`  |  `0->0`   | System Off
+|   `05`  |  `0->0`   | Stop all?
+
 
 Other commands
 ----
@@ -109,9 +120,7 @@ Other commands
 | ------- | --------- | ---- | ---- |
 |   `13`  |  `0->4`   | ? Amp set input to Tape in ?
 |   `06`  |  `0->4`   | ? Amp set off ?
-|   `07`  |  `0->4`   | ? Amp set mute ?
-|   `02`  |  `0->0`   | "Off", perhaps 0->0 is broadcast
-|   `01`  |  `0->0`   | "On", perhaps 0->0 is broadcast
+|   `07`  |  `0->4`   | ? Amp set mute ?l
 
 
 
