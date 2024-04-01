@@ -13,20 +13,20 @@ Currently, it can decode the commands, but not yet associate the transactions (T
 The Pin header is structured as follows:
 ```
  ---
-|  1 | AC 1                    \
+|  1 | AC 1   -                \
+ ----          |- 18v AC       |
+|  2 | AC 2   -                |- "DECK"
  ----                          |
-|  2 | AC 2                    |- "DECK"
- ----                          |
-|  3 | GND                     /
+|  3 | GND (Power)             /
  ----
-|  4 | GND                     \
+|  4 | GND (COM)               \
  ----                          |
 |  5 | POWER (logic level?)    |- "AMP
  ----                          |
 |  6 | 12v                     /
  ----
 |  7 | BUSY                    \
- ----                          |- HK OneWire
+ ----                          |- HK OneWire (5v)
 |  8 | DATA                    /
  ----
 |  9 | AC 1                    \
@@ -65,6 +65,8 @@ Recorded IDs
 Commands `0 -> 3`
 ----
 
+Missing to identify: Mute / unmute output
+
 |  ID  | Description | (Data)
 | ---- | ----------- | ------
 | `05` | Stop ?? Comes directly after `0->4: 07` and after startup| 
@@ -77,11 +79,11 @@ Commands `0 -> 3`
 | `0F` | Dolby: C |
 | `10` | Dolby: None |
 | `11` | Reverse Playing direction
-| `12` | ?? Comes directly after `08` or `09` |
+| `12` | ?? Comes directly after `08` or `09`|
 | `13` | ?? Comes directly after startup
 | `15` | Request to record
 | `17` | Play |
-| `16` | Pause |
+| `16` | Pause (Mute?)|
 | `1C` | ? Answer to `3->0 : 07`, so perhaps "Ok to output", or "request for playing direction"
 | `1E` | RECORD "NORM"
 | `1F` | Zero time counter
