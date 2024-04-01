@@ -93,8 +93,7 @@ Commands `3` -> `0`
 | ---- | ----------- | ------
 | `0C` | Set Time display | BCD-Like MM:SS, e.g. `0x0159` for 01:59 |
 | `0D` | Set Time display Negative ? | " |
-| `0F` | Tape deck is present ("in Dolby: C mode?)" |
-| 
+| `0F` | Tape deck is present (in Dolby: C mode?) |
 | `10` | Is playing "to the right" |
 | `11` | Is playing "to the left" |
 | `13` | ? Came during FF  |

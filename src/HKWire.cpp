@@ -5,7 +5,7 @@ using namespace HKWire;
 const IdDescriptionMap HKWire::knownIDs =
 {
     {0x0, "Tuner"},
-    {0x3, "Tape Deck"},
+    {0x3, "Tape"},
     {0x4, "Amp (?)"},
 };
 
