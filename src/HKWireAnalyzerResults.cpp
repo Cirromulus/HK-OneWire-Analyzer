@@ -56,16 +56,15 @@ void HKWireAnalyzerResults::GenerateBubbleText( U64 frame_index, Channel& channe
 		char data[16] = {0};	// default: none
 		const auto payload = Payload(frame.mData1);
 
-		const bool withData = state == WordState::end; // it finished data, so is in end bit.
-
 		AnalyzerHelpers::GetNumberString( payload.source, display_base, *getBitsPerWord(WordState::source), src, 16 );
 		AnalyzerHelpers::GetNumberString( payload.dest, display_base, *getBitsPerWord(WordState::dest), dst, 16 );
 		AnalyzerHelpers::GetNumberString( payload.command, display_base, *getBitsPerWord(WordState::command), cmd, 16 );
-		if (withData)
+		if (payload.data1.has_value())
 		{
 			// ugly as fuck, for separation
 			data[0] = ' ';
-			AnalyzerHelpers::GetNumberString( payload.getDataInHostOrder(), display_base, *getBitsPerWord(WordState::data), data + 1, 16 );
+			const auto length = payload.getDataLength();	// might also have data2
+			AnalyzerHelpers::GetNumberString( payload.getDataInHostOrder(), display_base, length, data + 1, 16 );
 		}
 		// TODO: Decode source, dest, and cmd
 		AddResultString(src, " -> ", dst, " : ", cmd, data);
@@ -126,7 +125,7 @@ void HKWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 			char cmd[16];
 			char data[16] = {0};	// default: none
 			const auto payload = Payload(frame.mData1);
-			const bool withData = state == WordState::end; // it finished data, so is in end bit.
+			const bool withData = payload.data1.has_value();
 
 			file_stream << "," << "command";
 			if (withData)
@@ -138,7 +137,7 @@ void HKWireAnalyzerResults::GenerateExportFile( const char* file, DisplayBase di
 			file_stream << "," << src << "," << dst << "," << cmd;
 			if (withData)
 			{
-				AnalyzerHelpers::GetNumberString( payload.getDataInHostOrder(), display_base, *getBitsPerWord(WordState::data), data, 16 );
+				AnalyzerHelpers::GetNumberString( payload.getDataInHostOrder(), display_base, payload.getDataLength(), data, 16 );
 				file_stream << "," << data;
 			}
 		}

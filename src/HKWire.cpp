@@ -22,10 +22,11 @@ const CommandDescriptionMap tunerCommands =
     {0x02, "System Off"},
     {0x10, "Tape playing forward"},
     {0x11, "Tape playing reverse"},
+    {0x0B, "Current FF/FR speed"},
     {0x0C, "Set time to display"},
     {0x0D, "Set neg. time to display"},
-    {0x06, "Status: Device not playing"},
-    {0x07, "Status: Device is  playing"},
+    {0x06, "Device not playing"},
+    {0x07, "Device is  playing"},
 };
 
 const CommandDescriptionMap tapeDeckCommands =

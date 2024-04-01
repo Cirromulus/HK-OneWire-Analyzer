@@ -118,7 +118,7 @@ void HKWireAnalyzer::WorkerThread()
 				markerType = AnalyzerResults::One;
 				break;
 			case BitType::data0:
-				// nothing, as we shift in a zero...
+				state.setCurrentBit(0);
 				markerType = AnalyzerResults::Zero;
 				break;
 			case BitType::end:
@@ -217,6 +217,7 @@ HKWireAnalyzer::addWordFrame(const HKWire::HKWireState& state, const U32& endOfT
 	}
 	else
 	{
+		// probably dead code with data now split in two phases
 		const auto hoData = state.payload.getDataInHostOrder(); // ??
 		frame_v2.AddByteArray(type, reinterpret_cast<const U8*>(&hoData), sizeof(decltype(hoData)));
 	}
@@ -285,11 +286,19 @@ HKWireAnalyzer::addCommandFrame(const HKWire::HKWireState& state, const U32& end
 		frame_v2.AddByte(getNameOfWordState(WordState::command), state.payload.getWord(WordState::command));
 	}
 
-	if (state.wordState == WordState::end) // i.e. "after data". again: read _expected_ word state!
+	// "reverse" test
+	if (state.payload.data2.has_value())
 	{
-		type = "command with data";
-		const auto hoData = state.payload.getDataInHostOrder();
-		frame_v2.AddByteArray(getNameOfWordState(WordState::data), reinterpret_cast<const U8*>(&hoData), sizeof(decltype(hoData)));
+		type = "command with 16 bit data";
+		U8 arrayData[2];
+		arrayData[0] = *state.payload.data1;	// zero is leftmost
+		arrayData[1] = *state.payload.data2;
+		frame_v2.AddByteArray("data", arrayData, sizeof(arrayData));
+	}
+	else if (state.payload.data1.has_value())
+	{
+		type = "command with 8 bit data";
+		frame_v2.AddByte("data", state.payload.getDataInHostOrder());
 	}
 	mResults->AddFrameV2( frame_v2, type, state.startOfTransmission, endOfTransmission );
 
