@@ -15,8 +15,11 @@ public:
 	virtual void LoadSettings( const char* settings );
 	virtual const char* SaveSettings();
 
+	static const char* const dataChannelName;
+	static const char* const busyChannelName;
 
-	Channel mInputChannel;
+
+	Channel mDataChannel;
 	// Channel mOptionalBusyChannel;
 	U64 mTimeBase_us;
 

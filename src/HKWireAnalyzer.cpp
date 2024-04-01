@@ -27,7 +27,7 @@ void HKWireAnalyzer::SetupResults()
 {
 	mResults.reset( new HKWireAnalyzerResults( this, mSettings.get() ) );
 	SetAnalyzerResults( mResults.get() );
-	mResults->AddChannelBubblesWillAppearOn( mSettings->mInputChannel );
+	mResults->AddChannelBubblesWillAppearOn( mSettings->mDataChannel );
 }
 
 void HKWireAnalyzer::WorkerThread()
@@ -37,7 +37,7 @@ void HKWireAnalyzer::WorkerThread()
 
 	HKWireState state;
 
-	mChannelData = GetAnalyzerChannelData( mSettings->mInputChannel );
+	mChannelData = GetAnalyzerChannelData( mSettings->mDataChannel );
 
 	for( ; ; )
 	{
@@ -62,7 +62,7 @@ void HKWireAnalyzer::WorkerThread()
 			// Üeh
 			mResults->AddMarker(centerOfLowPulse,
 								AnalyzerResults::ErrorDot,
-								mSettings->mInputChannel );
+								mSettings->mDataChannel );
 
 			// nothing good will come from this.
 			mResults->CancelPacketAndStartNewPacket();
@@ -77,7 +77,7 @@ void HKWireAnalyzer::WorkerThread()
 		// 	//let's put a dot for every tick counter (just cosmetics)
 		// 	mResults->AddMarker(fallingEdge + i * samplesPerTick,
 		// 					    AnalyzerResults::Dot,
-		// 						mSettings->mInputChannel);
+		// 						mSettings->mDataChannel);
 		// }
 
 		// check duration of stop (high) pulse
@@ -134,7 +134,7 @@ void HKWireAnalyzer::WorkerThread()
 				markerType = AnalyzerResults::ErrorX;
 		}
 		state.currentNumberOfBitsReceived++;
-		mResults->AddMarker(centerOfLowPulse, markerType, mSettings->mInputChannel);
+		mResults->AddMarker(centerOfLowPulse, markerType, mSettings->mDataChannel);
 
 		// check for transition
 		const auto canAdvanceState = state.canAdvanceState(bitType);
@@ -144,7 +144,7 @@ void HKWireAnalyzer::WorkerThread()
 						")" << endl;
 			mResults->AddMarker(centerOfLowPulse,
 					AnalyzerResults::ErrorSquare,
-					mSettings->mInputChannel);
+					mSettings->mDataChannel);
 			// PS.: It is ok that we already wrote into something,
 			// we have a buffer of one byte (because of ::_num)
 			mResults->CancelPacketAndStartNewPacket();
@@ -320,12 +320,12 @@ U32 HKWireAnalyzer::GetMinimumSampleRateHz()
 
 const char* HKWireAnalyzer::GetAnalyzerName() const
 {
-	return "B&O Onewire";
+	return "HK Onewire";
 }
 
 const char* GetAnalyzerName()
 {
-	return "B&O Onewire";
+	return "HK Onewire";
 }
 
 Analyzer* CreateAnalyzer()

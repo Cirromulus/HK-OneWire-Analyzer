@@ -44,7 +44,7 @@ namespace HKWire
 			case WordState::command:
 				return 8;
 			case WordState::data:
-				return 16;
+				return 16;	// Actually, 8 is also possible?!
 			case WordState::end:
 				return 1;
 			default:
@@ -315,9 +315,18 @@ namespace HKWire
 			}
 			// from here on, a end-bit is always valid
 
+			// TODO: Make two data word states.
+			// DirDey hagg because data section was observed to also have only 8 bit.
+			// As data is the only up-to-16-bit type, Modulo works here (for numbers > 0). Ouff.
+			if (currentNumberOfBitsReceived == 0)
+			{
+				return false;
+			}
+			const bool enoughBitsReceived = currentNumberOfBitsReceived % 8 == *expectedBitsInThisState % 8;
+			const bool correctlyReceivedEndBit = currentBit == BitType::end && currentNumberOfBitsReceived == 1;
+
 			// normal transition
-			return currentNumberOfBitsReceived == *expectedBitsInThisState ||
-			       (currentBit == BitType::end && currentNumberOfBitsReceived == 1); // the first
+			return enoughBitsReceived || correctlyReceivedEndBit; // the first
 		}
 
 		constexpr void

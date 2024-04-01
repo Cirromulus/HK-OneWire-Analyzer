@@ -91,12 +91,14 @@ Commands `3` -> `0`
 
 |  ID  | Description | (Data)
 | ---- | ----------- | ------
+| `0B` | Current FF/FR speed | _Only one byte!_ : lower nibble = speed (1-4), MSBit (`80`) = isReverse |
 | `0C` | Set Time display | BCD-Like MM:SS, e.g. `0x0159` for 01:59 |
 | `0D` | Set Time display Negative ? | " |
 | `0F` | Tape deck is present (in Dolby: C mode?) |
 | `10` | Is playing "to the right" |
 | `11` | Is playing "to the left" |
-| `13` | ? Came during FF  |
+| `13` | ? Came during FF, and after startup |
+| `05` | ? Comes sometimes after `13` |
 | `06` | Status Un-Playable? Eject was pressed, tape coming out
 | `07` | Status    playable? Eject was pressed, tape coming in and small wait time
 
