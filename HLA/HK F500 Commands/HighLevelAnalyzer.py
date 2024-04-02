@@ -9,7 +9,22 @@ known_ids = {
     0x4: "Amp (?)",
 }
 
-# dest[command]-> description
+def decodeTimeData(isForward, data):
+    result = " " if isForward else "-"
+    nibbles = []
+    for byte in data:
+        nibbles.append((byte & 0xF0) >> 4)
+        nibbles.append(byte & 0xF)
+    result += f"{nibbles[0]}{nibbles[1]}:{nibbles[2]}{nibbles[3]}"
+    return result
+
+def decodeFFSpeed(data):
+    isForward = not (data[0] & 0x80)
+    result = f"{data[0] & 0x0F} times "
+    result += "forward" if isForward else "backward"
+    return result
+
+# dest[command]-> (description, perhaps_function_to_decode)
 known_commands = {
     # tuner
     0x0: {
@@ -19,11 +34,11 @@ known_commands = {
         0x05: "Stop all",
 
         # normal Status
-        0x06: "Device not playing",
-        0x07: "Device is  playing",
-        0x0B: "Current FF/FR speed",
-        0x0C: "Set time to display",
-        0x0D: "Set neg. time to display",
+        0x06: "NOT able to play",
+        0x07: "Able to play",
+        0x0B: ("Current FF/FR speed", decodeFFSpeed),
+        0x0C: ("Set time to display", lambda data: decodeTimeData(True, data)),
+        0x0D: ("Set neg. time to display", lambda data: decodeTimeData(False, data)),
         0x0F: "Tape deck present (?)",
         0x10: "Tape playing forward",
         0x11: "Tape playing reverse",
@@ -58,11 +73,25 @@ def getName(id):
     else:
         return hex(id)
 
+def defaultDataDecodeFun(data):
+    number = 0
+    for byte in data:
+        number = number << 8
+        number = number + byte
+    return hex(number)
+
 def getCommand(dst, cmd):
+    name = hex(cmd)
+    decodeFun = defaultDataDecodeFun
     if dst in known_commands and cmd in known_commands[dst]:
-        return known_commands[dst][cmd]
-    else:
-        return hex(cmd)
+        maybeTuple = known_commands[dst][cmd]
+        if type(maybeTuple) is tuple:
+            name = known_commands[dst][cmd][0]
+            decodeFun = known_commands[dst][cmd][1] or decodeFun
+        else:
+            name = known_commands[dst][cmd]
+    return (name, decodeFun)
+
 
 # High level analyzers must subclass the HighLevelAnalyzer class.
 class Hla(HighLevelAnalyzer):
@@ -74,10 +103,10 @@ class Hla(HighLevelAnalyzer):
     # An optional list of types this analyzer produces: providing a way to customize the way frames are displayed in Logic 2.
     result_types = {
         'command': {
-            'format': '{{data.src}} -> {{data.dst}}: {{data.cmd}}'
+            'format': '{{data.source}} -> {{data.destination}}: {{data.command}}'
         },
         'command_with_data': {
-            'format': '{{data.src}} -> {{data.dst}}: {{data.cmd}} {{data.dat}}'
+            'format': '{{data.source}} -> {{data.destination}}: {{data.command}} {{data.data}}'
         }
     }
 
@@ -103,23 +132,20 @@ class Hla(HighLevelAnalyzer):
         dst = frame.data['destination'][0]
         dstname = getName(dst)
         cmd = frame.data['command'][0]
-        cmdname = getCommand(dst, cmd)
+        (cmdname, decodeFun) = getCommand(dst, cmd)
 
         if ('data' in frame.data):
-            # TODO: also decode data if known format
-            data = frame.data['data'][0]
+            data = decodeFun(frame.data['data'])
 
             return AnalyzerFrame('command_with_data', frame.start_time, frame.end_time, {
-                'input_type': frame.type,
-                'src' : srcname,
-                'dst' : dstname,
-                'cmd' : cmdname,
-                'dat' : data,
+                'source' : srcname,
+                'destination' : dstname,
+                'command' : cmdname,
+                'data' : data,
             })
         else:
             return AnalyzerFrame('command', frame.start_time, frame.end_time, {
-                'input_type': frame.type,
-                'src' : srcname,
-                'dst' : dstname,
-                'cmd' : cmdname,
+                'source' : srcname,
+                'destination' : dstname,
+                'command' : cmdname,
             })
