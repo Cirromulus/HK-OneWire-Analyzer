@@ -3,7 +3,6 @@
 #include "HKWire.h"
 #include <AnalyzerChannelData.h>
 
-#include <arpa/inet.h> // E.T., are you there?
 #include <iostream>
 
 using namespace HKWire;

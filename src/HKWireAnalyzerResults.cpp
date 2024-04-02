@@ -4,8 +4,6 @@
 #include "HKWireAnalyzerSettings.h"
 #include "HKWire.h"
 
-#include <arpa/inet.h> // E.T., are you there?
-
 #include <iostream>
 #include <fstream>
 

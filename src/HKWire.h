@@ -6,7 +6,6 @@
 #include <utility>
 #include <array>
 #include <assert.h>
-#include <endian.h>
 #include <map>	// until something static memory is available
 
 namespace HKWire
