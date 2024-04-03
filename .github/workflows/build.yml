@@ -58,6 +58,15 @@ jobs:
       with:
         name: linux
         path: ${{github.workspace}}/build/Analyzers/*.so
+  HLA:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Upload HLA
+      uses: actions/upload-artifact@v2
+      with:
+        name: HLA
+        path: ${{github.workspace}}/HLA/HK F500 Commands
   publish:
     needs: [windows, macos, linux]
     runs-on: ubuntu-latest
