@@ -48,9 +48,14 @@ TODO. See code.
 
 ## High-Level transactions
 
-TODO: More. Also perhaps build an [extension](https://support.saleae.com/extensions/high-level-analyzer-extensions) for it.
+TODO: More. Implemented in [the HLA](HLA/HK%20F500%20Commands).
 
 Note: All numbers in Hex
+
+TODO: Confusion about Forward / Backwards can be resolved by knowing that there are more Rewind and Forward commands:
+1. `|<<`/`>>|` will rewind / advance the Tape back to a previous song (utilizing the audio detect feature). The number of to-be-skipped songs is indicated in the counter.
+2. `<<`/`>>` will rewind / ff to the beginning of the next side.
+3. Both commands will also function in `PAUSED` state
 
 Recorded IDs
 ----
